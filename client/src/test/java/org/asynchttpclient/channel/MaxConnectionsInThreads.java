@@ -59,11 +59,12 @@ public class MaxConnectionsInThreads extends AbstractBasicTest {
 
         final CountDownLatch inThreadsLatch = new CountDownLatch(2);
         final AtomicInteger failedCount = new AtomicInteger();
-
-        try (AsyncHttpClient client = asyncHttpClient(config)) {
+        final AsyncHttpClient client = asyncHttpClient(config);
+        try {
             for (int i = 0; i < urls.length; i++) {
                 final String url = urls[i];
                 Thread t = new Thread() {
+                    @Override
                     public void run() {
                         client.prepareGet(url).execute(new AsyncCompletionHandlerBase() {
                             @Override
@@ -113,6 +114,8 @@ public class MaxConnectionsInThreads extends AbstractBasicTest {
             notInThreadsLatch.await();
 
             assertEquals(failedCount.get(), 1, "Max Connections should have been reached when launching from main thread");
+        } finally {
+            client.close();
         }
     }
 
@@ -131,6 +134,7 @@ public class MaxConnectionsInThreads extends AbstractBasicTest {
         server.start();
     }
 
+    @Override
     public String getTargetUrl() {
         return "http://localhost:" + port1 + "/timeout/";
     }
@@ -141,6 +145,7 @@ public class MaxConnectionsInThreads extends AbstractBasicTest {
         private static final String contentType = "text/plain";
         public static long DEFAULT_TIMEOUT = 2000;
 
+        @Override
         public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
             res.setStatus(200);
             res.addHeader("Content-Type", contentType);

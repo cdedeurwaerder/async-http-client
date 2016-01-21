@@ -42,6 +42,7 @@ public class PerRequestRelative302Test extends AbstractBasicTest {
 
     private class Relative302Handler extends AbstractHandler {
 
+        @Override
         public void handle(String s, Request r, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             String param;
@@ -64,6 +65,7 @@ public class PerRequestRelative302Test extends AbstractBasicTest {
         }
     }
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
@@ -87,7 +89,8 @@ public class PerRequestRelative302Test extends AbstractBasicTest {
     // @Test(groups = "online")
     public void redirected302Test() throws Exception {
         isSet.getAndSet(false);
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Response response = c.prepareGet(getTargetUrl()).setFollowRedirect(true).setHeader("X-redirect", "http://www.microsoft.com/").execute().get();
 
             assertNotNull(response);
@@ -97,16 +100,21 @@ public class PerRequestRelative302Test extends AbstractBasicTest {
             String baseUrl = getBaseUrl(response.getUri());
 
             assertTrue(baseUrl.matches(anyMicrosoftPage), "response does not show redirection to " + anyMicrosoftPage);
+        } finally {
+            c.close();
         }
     }
 
     // @Test(groups = "online")
     public void notRedirected302Test() throws Exception {
         isSet.getAndSet(false);
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true));
+        try {
             Response response = c.prepareGet(getTargetUrl()).setFollowRedirect(false).setHeader("X-redirect", "http://www.microsoft.com/").execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 302);
+        } finally {
+            c.close();
         }
     }
 
@@ -130,7 +138,8 @@ public class PerRequestRelative302Test extends AbstractBasicTest {
     // @Test(groups = "standalone")
     public void redirected302InvalidTest() throws Exception {
         isSet.getAndSet(false);
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             // If the test hit a proxy, no ConnectException will be thrown and instead of 404 will be returned.
             Response response = c.preparePost(getTargetUrl()).setFollowRedirect(true).setHeader("X-redirect", String.format("http://localhost:%d/", port2)).execute().get();
 
@@ -138,18 +147,22 @@ public class PerRequestRelative302Test extends AbstractBasicTest {
             assertEquals(response.getStatusCode(), 404);
         } catch (ExecutionException ex) {
             assertEquals(ex.getCause().getClass(), ConnectException.class);
+        } finally {
+            c.close();
         }
     }
 
     // @Test(groups = "standalone")
     public void relativeLocationUrl() throws Exception {
         isSet.getAndSet(false);
-
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Response response = c.preparePost(getTargetUrl()).setFollowRedirect(true).setHeader("X-redirect", "/foo/test").execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 200);
             assertEquals(response.getUri().toString(), getTargetUrl());
+        } finally {
+            c.close();
         }
     }
 }

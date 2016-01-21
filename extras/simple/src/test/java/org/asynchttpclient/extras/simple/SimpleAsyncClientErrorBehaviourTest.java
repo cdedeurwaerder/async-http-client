@@ -36,9 +36,10 @@ public class SimpleAsyncClientErrorBehaviourTest extends AbstractBasicTest {
     
     @Test(groups = "standalone")
     public void testAccumulateErrorBody() throws Exception {
-        try (SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()//
+        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()//
                 .setUrl(getTargetUrl() + "/nonexistent")//
-                .setErrorDocumentBehaviour(ErrorDocumentBehaviour.ACCUMULATE).build()) {
+                .setErrorDocumentBehaviour(ErrorDocumentBehaviour.ACCUMULATE).build();
+        try {
             ByteArrayOutputStream o = new ByteArrayOutputStream(10);
             Future<Response> future = client.get(new OutputStreamBodyConsumer(o));
 
@@ -47,14 +48,17 @@ public class SimpleAsyncClientErrorBehaviourTest extends AbstractBasicTest {
             assertEquals(response.getStatusCode(), 404);
             assertEquals(o.toString(), "");
             assertTrue(response.getResponseBody().startsWith("<html>"));
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testOmitErrorBody() throws Exception {
-        try (SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()//
+        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()//
                 .setUrl(getTargetUrl() + "/nonexistent")//
-                .setErrorDocumentBehaviour(ErrorDocumentBehaviour.OMIT).build()) {
+                .setErrorDocumentBehaviour(ErrorDocumentBehaviour.OMIT).build();
+        try {
             ByteArrayOutputStream o = new ByteArrayOutputStream(10);
             Future<Response> future = client.get(new OutputStreamBodyConsumer(o));
 
@@ -63,6 +67,8 @@ public class SimpleAsyncClientErrorBehaviourTest extends AbstractBasicTest {
             assertEquals(response.getStatusCode(), 404);
             assertEquals(o.toString(), "");
             assertEquals(response.getResponseBody(), "");
+        } finally {
+            client.close();
         }
     }
 
@@ -70,6 +76,7 @@ public class SimpleAsyncClientErrorBehaviourTest extends AbstractBasicTest {
     public AbstractHandler configureHandler() throws Exception {
         return new AbstractHandler() {
 
+            @Override
             public void handle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
                 response.sendError(404);
                 baseRequest.setHandled(true);

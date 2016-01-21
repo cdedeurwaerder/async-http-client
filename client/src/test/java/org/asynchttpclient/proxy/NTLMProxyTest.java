@@ -93,11 +93,14 @@ public class NTLMProxyTest extends AbstractBasicTest {
     @Test(groups = "standalone")
     public void ntlmProxyTest() throws IOException, InterruptedException, ExecutionException {
 
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Request request = get("http://localhost").setProxyServer(ntlmProxy()).build();
             Future<Response> responseFuture = client.executeRequest(request);
             int status = responseFuture.get().getStatusCode();
             Assert.assertEquals(status, 200);
+        } finally {
+            client.close();
         }
     }
 

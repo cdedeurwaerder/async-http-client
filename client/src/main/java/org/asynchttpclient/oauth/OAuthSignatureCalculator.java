@@ -59,6 +59,7 @@ public class OAuthSignatureCalculator implements SignatureCalculator {
     private static final String OAUTH_SIGNATURE_METHOD = "HMAC-SHA1";
 
     protected static final ThreadLocal<byte[]> NONCE_BUFFER = new ThreadLocal<byte[]>() {
+        @Override
         protected byte[] initialValue() {
             return new byte[16];
         }
@@ -240,7 +241,7 @@ public class OAuthSignatureCalculator implements SignatureCalculator {
         private final ArrayList<Parameter> allParameters;
 
         public OAuthParameterSet(int size) {
-            allParameters = new ArrayList<>(size);
+            allParameters = new ArrayList<Parameter>(size);
         }
 
         public OAuthParameterSet add(String key, String value) {

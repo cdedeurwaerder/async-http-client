@@ -42,6 +42,7 @@ public class ErrorResponseTest extends AbstractBasicTest {
     final static String BAD_REQUEST_STR = "Very Bad Request! No cookies.";
 
     private static class ErrorHandler extends AbstractHandler {
+        @Override
         public void handle(String s, Request r, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             try {
                 Thread.sleep(210L);
@@ -62,12 +63,15 @@ public class ErrorResponseTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testQueryParameters() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.prepareGet("http://localhost:" + port1 + "/foo").addHeader("Accepts", "*/*").execute();
             Response resp = f.get(3, TimeUnit.SECONDS);
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), 400);
             assertEquals(resp.getResponseBody(), BAD_REQUEST_STR);
+        } finally {
+            client.close();
         }
     }
 }

@@ -40,7 +40,8 @@ public class AsyncHttpTest {
         final AtomicInteger successCount = new AtomicInteger();
         final AtomicInteger progressCount = new AtomicInteger();
 
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Promise<Response, Throwable, HttpProgress> p1 = AsyncHttpDeferredObject.promise(client.prepareGet("http://www.ning.com"));
             p1.done(new DoneCallback<Response>() {
                 @Override
@@ -64,14 +65,16 @@ public class AsyncHttpTest {
             assertTrue(progressCount.get() > 0);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 
     public void testMultiplePromiseAdapter() throws IOException {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger successCount = new AtomicInteger();
-
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Promise<Response, Throwable, HttpProgress> p1 = AsyncHttpDeferredObject.promise(client.prepareGet("http://www.ning.com"));
             Promise<Response, Throwable, HttpProgress> p2 = AsyncHttpDeferredObject.promise(client.prepareGet("http://www.google.com"));
             AsyncHttpDeferredObject deferredRequest = new AsyncHttpDeferredObject(client.prepareGet("http://jdeferred.org"));
@@ -94,6 +97,8 @@ public class AsyncHttpTest {
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 }

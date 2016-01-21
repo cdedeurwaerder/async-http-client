@@ -45,6 +45,7 @@ public class MultipleHeaderTest extends AbstractBasicTest {
     private ServerSocket serverSocket;
     private Future<?> voidFuture;
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
@@ -52,6 +53,7 @@ public class MultipleHeaderTest extends AbstractBasicTest {
         serverSocket = new ServerSocket(port1);
         executorService = Executors.newFixedThreadPool(1);
         voidFuture = executorService.submit(new Callable<Void>() {
+            @Override
             public Void call() throws Exception {
                 Socket socket;
                 while ((socket = serverSocket.accept()) != null) {
@@ -81,6 +83,7 @@ public class MultipleHeaderTest extends AbstractBasicTest {
         });
     }
 
+    @Override
     @AfterClass(alwaysRun = true)
     public void tearDownGlobal() throws Exception {
         voidFuture.cancel(true);
@@ -91,23 +94,27 @@ public class MultipleHeaderTest extends AbstractBasicTest {
     @Test(groups = "standalone")
     public void testMultipleOtherHeaders() throws IOException, ExecutionException, TimeoutException, InterruptedException {
         final String[] xffHeaders = new String[] { null, null };
-
-        try (AsyncHttpClient ahc = asyncHttpClient()) {
+        AsyncHttpClient ahc = asyncHttpClient();
+        try {
             Request req = get("http://localhost:" + port1 + "/MultiOther").build();
             final CountDownLatch latch = new CountDownLatch(1);
             ahc.executeRequest(req, new AsyncHandler<Void>() {
+                @Override
                 public void onThrowable(Throwable t) {
                     t.printStackTrace(System.out);
                 }
 
+                @Override
                 public State onBodyPartReceived(HttpResponseBodyPart objectHttpResponseBodyPart) throws Exception {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onStatusReceived(HttpResponseStatus objectHttpResponseStatus) throws Exception {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onHeadersReceived(HttpResponseHeaders response) throws Exception {
                     int i = 0;
                     for (String header : response.getHeaders().getAll("X-Forwarded-For")) {
@@ -117,6 +124,7 @@ public class MultipleHeaderTest extends AbstractBasicTest {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public Void onCompleted() throws Exception {
                     return null;
                 }
@@ -134,29 +142,35 @@ public class MultipleHeaderTest extends AbstractBasicTest {
                 assertEquals(xffHeaders[1], "abc");
                 assertEquals(xffHeaders[0], "def");
             }
+        } finally {
+            ahc.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testMultipleEntityHeaders() throws IOException, ExecutionException, TimeoutException, InterruptedException {
         final String[] clHeaders = new String[] { null, null };
-
-        try (AsyncHttpClient ahc = asyncHttpClient()) {
+        AsyncHttpClient ahc = asyncHttpClient();
+        try {
             Request req = get("http://localhost:" + port1 + "/MultiEnt").build();
             final CountDownLatch latch = new CountDownLatch(1);
             ahc.executeRequest(req, new AsyncHandler<Void>() {
+                @Override
                 public void onThrowable(Throwable t) {
                     t.printStackTrace(System.out);
                 }
 
+                @Override
                 public State onBodyPartReceived(HttpResponseBodyPart objectHttpResponseBodyPart) throws Exception {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onStatusReceived(HttpResponseStatus objectHttpResponseStatus) throws Exception {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onHeadersReceived(HttpResponseHeaders response) throws Exception {
                     try {
                         int i = 0;
@@ -169,6 +183,7 @@ public class MultipleHeaderTest extends AbstractBasicTest {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public Void onCompleted() throws Exception {
                     return null;
                 }
@@ -188,6 +203,8 @@ public class MultipleHeaderTest extends AbstractBasicTest {
                 assertEquals(clHeaders[0], "1");
                 assertEquals(clHeaders[1], "2");
             }
+        } finally {
+            ahc.close();
         }
     }
 }

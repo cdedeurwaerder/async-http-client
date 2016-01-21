@@ -166,7 +166,7 @@ public class OAuthSignatureCalculatorTest {
         ConsumerKey consumer = new ConsumerKey(CONSUMER_KEY, CONSUMER_SECRET);
         RequestToken user = new RequestToken(TOKEN_KEY, TOKEN_SECRET);
         OAuthSignatureCalculator calc = new OAuthSignatureCalculator(consumer, user);
-        List<Param> queryParams = new ArrayList<>();
+        List<Param> queryParams = new ArrayList<Param>();
         queryParams.add(new Param("file", "vacation.jpg"));
         queryParams.add(new Param("size", "original"));
         String url = "http://photos.example.net/photos";

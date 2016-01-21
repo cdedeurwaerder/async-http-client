@@ -138,7 +138,8 @@ public class ProxyServer {
         }
 
         public ProxyServer build() {
-            List<String> nonProxyHosts = this.nonProxyHosts != null ? Collections.unmodifiableList(this.nonProxyHosts) : Collections.emptyList();
+            @SuppressWarnings("unchecked")
+            List<String> nonProxyHosts = (List<String>) (this.nonProxyHosts != null ? Collections.unmodifiableList(this.nonProxyHosts) : Collections.emptyList());
             return new ProxyServer(host, port, securedPort, realm, nonProxyHosts);
         }
     }

@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 public class RetryRequestTest extends AbstractBasicTest {
     public static class SlowAndBigHandler extends AbstractHandler {
 
+        @Override
         public void handle(String pathInContext, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             int load = 100;
@@ -59,6 +60,7 @@ public class RetryRequestTest extends AbstractBasicTest {
         }
     }
 
+    @Override
     protected String getTargetUrl() {
         return String.format("http://localhost:%d/", port1);
     }
@@ -70,11 +72,14 @@ public class RetryRequestTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testMaxRetry() throws Exception {
-        try (AsyncHttpClient ahc = asyncHttpClient(config().setMaxRequestRetry(0))) {
+        AsyncHttpClient ahc = asyncHttpClient(config().setMaxRequestRetry(0));
+        try {
             ahc.executeRequest(ahc.prepareGet(getTargetUrl()).build()).get();
             fail();
         } catch (Exception t) {
             assertEquals(t.getCause(), RemotelyClosedException.INSTANCE);
+        } finally {
+            ahc.close();
         }
     }
 }

@@ -231,7 +231,7 @@ public class ResumableAsyncHandler implements AsyncHandler<Response> {
 
     private static class ResumableIndexThread extends Thread {
 
-        public final ConcurrentLinkedQueue<ResumableProcessor> resumableProcessors = new ConcurrentLinkedQueue<>();
+        public final ConcurrentLinkedQueue<ResumableProcessor> resumableProcessors = new ConcurrentLinkedQueue<ResumableProcessor>();
 
         public ResumableIndexThread() {
             Runtime.getRuntime().addShutdownHook(this);
@@ -241,6 +241,7 @@ public class ResumableAsyncHandler implements AsyncHandler<Response> {
             resumableProcessors.offer(p);
         }
 
+        @Override
         public void run() {
             for (ResumableProcessor p : resumableProcessors) {
                 p.save(resumableIndex);
@@ -287,17 +288,21 @@ public class ResumableAsyncHandler implements AsyncHandler<Response> {
 
     private static class NULLResumableHandler implements ResumableProcessor {
 
+        @Override
         public void put(String url, long transferredBytes) {
         }
 
+        @Override
         public void remove(String uri) {
         }
 
+        @Override
         public void save(Map<String, Long> map) {
         }
 
+        @Override
         public Map<String, Long> load() {
-            return new HashMap<>();
+            return new HashMap<String, Long>();
         }
     }
 
@@ -305,13 +310,16 @@ public class ResumableAsyncHandler implements AsyncHandler<Response> {
 
         private long length = 0L;
 
+        @Override
         public void onBytesReceived(ByteBuffer byteBuffer) throws IOException {
             length += byteBuffer.remaining();
         }
 
+        @Override
         public void onAllBytesReceived() {
         }
 
+        @Override
         public long length() {
             return length;
         }

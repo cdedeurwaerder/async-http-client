@@ -51,7 +51,7 @@ public class EventCollectingHandler extends AsyncCompletionHandlerBase implement
     public static final String REQUEST_SEND_EVENT = "RequestSend";
     public static final String RETRY_EVENT = "Retry";
 
-    public Queue<String> firedEvents = new ConcurrentLinkedQueue<>();
+    public Queue<String> firedEvents = new ConcurrentLinkedQueue<String>();
     private CountDownLatch completionLatch = new CountDownLatch(1);
 
     public void waitForCompletion(int timeout, TimeUnit unit) throws InterruptedException {

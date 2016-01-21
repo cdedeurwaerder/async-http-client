@@ -42,6 +42,7 @@ public class TransferListenerTest extends AbstractBasicTest {
 
     private class BasicHandler extends AbstractHandler {
 
+        @Override
         public void handle(String s, org.eclipse.jetty.server.Request r, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             Enumeration<?> e = httpRequest.getHeaderNames();
@@ -79,36 +80,43 @@ public class TransferListenerTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void basicGetTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
-            final AtomicReference<Throwable> throwable = new AtomicReference<>();
-            final AtomicReference<HttpHeaders> hSent = new AtomicReference<>();
-            final AtomicReference<HttpHeaders> hRead = new AtomicReference<>();
-            final AtomicReference<byte[]> bb = new AtomicReference<>();
+        AsyncHttpClient c = asyncHttpClient();
+        try {
+            final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
+            final AtomicReference<HttpHeaders> hSent = new AtomicReference<HttpHeaders>();
+            final AtomicReference<HttpHeaders> hRead = new AtomicReference<HttpHeaders>();
+            final AtomicReference<byte[]> bb = new AtomicReference<byte[]>();
             final AtomicBoolean completed = new AtomicBoolean(false);
 
             TransferCompletionHandler tl = new TransferCompletionHandler();
             tl.addTransferListener(new TransferListener() {
 
+                @Override
                 public void onRequestHeadersSent(HttpHeaders headers) {
                     hSent.set(headers);
                 }
 
+                @Override
                 public void onResponseHeadersReceived(HttpHeaders headers) {
                     hRead.set(headers);
                 }
 
+                @Override
                 public void onBytesReceived(byte[] b) {
                     if (b.length != 0)
                         bb.set(b);
                 }
 
+                @Override
                 public void onBytesSent(long amount, long current, long total) {
                 }
 
+                @Override
                 public void onRequestResponseCompleted() {
                     completed.set(true);
                 }
 
+                @Override
                 public void onThrowable(Throwable t) {
                     throwable.set(t);
                 }
@@ -122,14 +130,16 @@ public class TransferListenerTest extends AbstractBasicTest {
             assertNotNull(hSent.get());
             assertNull(bb.get());
             assertNull(throwable.get());
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void basicPutFileTest() throws Exception {
-        final AtomicReference<Throwable> throwable = new AtomicReference<>();
-        final AtomicReference<HttpHeaders> hSent = new AtomicReference<>();
-        final AtomicReference<HttpHeaders> hRead = new AtomicReference<>();
+        final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
+        final AtomicReference<HttpHeaders> hSent = new AtomicReference<HttpHeaders>();
+        final AtomicReference<HttpHeaders> hRead = new AtomicReference<HttpHeaders>();
         final AtomicInteger bbReceivedLenght = new AtomicInteger(0);
         final AtomicLong bbSentLenght = new AtomicLong(0L);
 
@@ -139,30 +149,37 @@ public class TransferListenerTest extends AbstractBasicTest {
 
         int timeout = (int) (file.length() / 1000);
 
-        try (AsyncHttpClient client = asyncHttpClient(config().setConnectTimeout(timeout))) {
+        AsyncHttpClient client = asyncHttpClient(config().setConnectTimeout(timeout));
+        try {
             TransferCompletionHandler tl = new TransferCompletionHandler();
             tl.addTransferListener(new TransferListener() {
 
+                @Override
                 public void onRequestHeadersSent(HttpHeaders headers) {
                     hSent.set(headers);
                 }
 
+                @Override
                 public void onResponseHeadersReceived(HttpHeaders headers) {
                     hRead.set(headers);
                 }
 
+                @Override
                 public void onBytesReceived(byte[] b) {
                     bbReceivedLenght.addAndGet(b.length);
                 }
 
+                @Override
                 public void onBytesSent(long amount, long current, long total) {
                     bbSentLenght.addAndGet(amount);
                 }
 
+                @Override
                 public void onRequestResponseCompleted() {
                     completed.set(true);
                 }
 
+                @Override
                 public void onThrowable(Throwable t) {
                     throwable.set(t);
                 }
@@ -176,15 +193,18 @@ public class TransferListenerTest extends AbstractBasicTest {
             assertNotNull(hSent.get());
             assertEquals(bbReceivedLenght.get(), file.length(), "Number of received bytes incorrect");
             assertEquals(bbSentLenght.get(), file.length(), "Number of sent bytes incorrect");
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void basicPutFileBodyGeneratorTest() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient()) {
-            final AtomicReference<Throwable> throwable = new AtomicReference<>();
-            final AtomicReference<HttpHeaders> hSent = new AtomicReference<>();
-            final AtomicReference<HttpHeaders> hRead = new AtomicReference<>();
+        AsyncHttpClient client = asyncHttpClient();
+        try {
+            final AtomicReference<Throwable> throwable = new AtomicReference<Throwable>();
+            final AtomicReference<HttpHeaders> hSent = new AtomicReference<HttpHeaders>();
+            final AtomicReference<HttpHeaders> hRead = new AtomicReference<HttpHeaders>();
             final AtomicInteger bbReceivedLenght = new AtomicInteger(0);
             final AtomicLong bbSentLenght = new AtomicLong(0L);
 
@@ -195,26 +215,32 @@ public class TransferListenerTest extends AbstractBasicTest {
             TransferCompletionHandler tl = new TransferCompletionHandler();
             tl.addTransferListener(new TransferListener() {
 
+                @Override
                 public void onRequestHeadersSent(HttpHeaders headers) {
                     hSent.set(headers);
                 }
 
+                @Override
                 public void onResponseHeadersReceived(HttpHeaders headers) {
                     hRead.set(headers);
                 }
 
+                @Override
                 public void onBytesReceived(byte[] b) {
                     bbReceivedLenght.addAndGet(b.length);
                 }
 
+                @Override
                 public void onBytesSent(long amount, long current, long total) {
                     bbSentLenght.addAndGet(amount);
                 }
 
+                @Override
                 public void onRequestResponseCompleted() {
                     completed.set(true);
                 }
 
+                @Override
                 public void onThrowable(Throwable t) {
                     throwable.set(t);
                 }
@@ -228,6 +254,8 @@ public class TransferListenerTest extends AbstractBasicTest {
             assertNotNull(hSent.get());
             assertEquals(bbReceivedLenght.get(), file.length(), "Number of received bytes incorrect");
             assertEquals(bbSentLenght.get(), file.length(), "Number of sent bytes incorrect");
+        } finally {
+            client.close();
         }
     }
 }

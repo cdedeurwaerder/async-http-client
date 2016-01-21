@@ -75,17 +75,21 @@ public class RedirectConnectionUsageTest extends AbstractBasicTest {
                 .setFollowRedirect(true)//
                 .build();
 
-        try (AsyncHttpClient c = asyncHttpClient(config)) {
+        AsyncHttpClient c = asyncHttpClient(config);
+        try {
             ListenableFuture<Response> response = c.executeRequest(get(servletEndpointRedirectUrl));
             Response res = null;
             res = response.get();
             assertNotNull(res.getResponseBody());
             assertEquals(res.getUri().toString(), BASE_URL + "/overthere");
+        } finally {
+            c.close();
         }
     }
 
     @SuppressWarnings("serial")
     class MockRedirectHttpServlet extends HttpServlet {
+        @Override
         public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
             res.sendRedirect("/overthere");
         }
@@ -97,6 +101,7 @@ public class RedirectConnectionUsageTest extends AbstractBasicTest {
         private static final String contentType = "text/xml";
         private static final String xml = "<?xml version=\"1.0\"?><hello date=\"%s\"></hello>";
 
+        @Override
         public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
             String xmlToReturn = String.format(xml, new Object[] { new Date().toString() });
 

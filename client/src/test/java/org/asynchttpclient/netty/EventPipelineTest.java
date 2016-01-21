@@ -35,12 +35,13 @@ public class EventPipelineTest extends AbstractBasicTest {
     public void asyncPipelineTest() throws Exception {
 
         AsyncHttpClientConfig.AdditionalChannelInitializer httpAdditionalPipelineInitializer = new AsyncHttpClientConfig.AdditionalChannelInitializer() {
+            @Override
             public void initChannel(Channel channel) throws Exception {
                 channel.pipeline().addBefore("inflater", "copyEncodingHeader", new CopyEncodingHandler());
             }
         };
-
-        try (AsyncHttpClient p = asyncHttpClient(config().setHttpAdditionalChannelInitializer(httpAdditionalPipelineInitializer))) {
+        AsyncHttpClient p = asyncHttpClient(config().setHttpAdditionalChannelInitializer(httpAdditionalPipelineInitializer));
+        try {
             final CountDownLatch l = new CountDownLatch(1);
             p.executeRequest(get(getTargetUrl()), new AsyncCompletionHandlerAdapter() {
                 @Override
@@ -57,6 +58,8 @@ public class EventPipelineTest extends AbstractBasicTest {
             if (!l.await(TIMEOUT, TimeUnit.SECONDS)) {
                 fail("Timeout out");
             }
+        } finally {
+            p.close();
         }
     }
 

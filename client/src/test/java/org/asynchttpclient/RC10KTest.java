@@ -47,9 +47,10 @@ public class RC10KTest extends AbstractBasicTest {
     private static final int C10K = 1000;
     private static final String ARG_HEADER = "Arg";
     private static final int SRV_COUNT = 10;
-    protected List<Server> servers = new ArrayList<>(SRV_COUNT);
+    protected List<Server> servers = new ArrayList<Server>(SRV_COUNT);
     private int[] ports;
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         ports = new int[SRV_COUNT];
@@ -59,6 +60,7 @@ public class RC10KTest extends AbstractBasicTest {
         logger.info("Local HTTP servers started successfully");
     }
 
+    @Override
     @AfterClass(alwaysRun = true)
     public void tearDownGlobal() throws Exception {
         for (Server srv : servers) {
@@ -78,6 +80,7 @@ public class RC10KTest extends AbstractBasicTest {
     @Override
     public AbstractHandler configureHandler() throws Exception {
         return new AbstractHandler() {
+            @Override
             public void handle(String s, Request r, HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
                 resp.setContentType("text/pain");
                 String arg = s.substring(1);
@@ -92,8 +95,9 @@ public class RC10KTest extends AbstractBasicTest {
 
     @Test(timeOut = 10 * 60 * 1000, groups = "scalability")
     public void rc10kProblem() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient ahc = asyncHttpClient(config().setMaxConnectionsPerHost(C10K).setKeepAlive(true))) {
-            List<Future<Integer>> resps = new ArrayList<>(C10K);
+        AsyncHttpClient ahc = asyncHttpClient(config().setMaxConnectionsPerHost(C10K).setKeepAlive(true));
+        try {
+            List<Future<Integer>> resps = new ArrayList<Future<Integer>>(C10K);
             int i = 0;
             while (i < C10K) {
                 resps.add(ahc.prepareGet(String.format("http://localhost:%d/%d", ports[i % SRV_COUNT], i)).execute(new MyAsyncHandler(i++)));
@@ -104,6 +108,8 @@ public class RC10KTest extends AbstractBasicTest {
                 assertNotNull(resp);
                 assertEquals(resp.intValue(), i++);
             }
+        } finally {
+            ahc.close();
         }
     }
 
@@ -115,26 +121,31 @@ public class RC10KTest extends AbstractBasicTest {
             arg = String.format("%d", i);
         }
 
+        @Override
         public void onThrowable(Throwable t) {
             logger.warn("onThrowable called.", t);
         }
 
+        @Override
         public State onBodyPartReceived(HttpResponseBodyPart event) throws Exception {
             String s = new String(event.getBodyPartBytes());
             result.compareAndSet(-1, new Integer(s.trim().equals("") ? "-1" : s));
             return State.CONTINUE;
         }
 
+        @Override
         public State onStatusReceived(HttpResponseStatus event) throws Exception {
             assertEquals(event.getStatusCode(), 200);
             return State.CONTINUE;
         }
 
+        @Override
         public State onHeadersReceived(HttpResponseHeaders event) throws Exception {
             assertEquals(event.getHeaders().get(ARG_HEADER), arg);
             return State.CONTINUE;
         }
 
+        @Override
         public Integer onCompleted() throws Exception {
             return result.get();
         }

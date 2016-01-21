@@ -53,7 +53,7 @@ public final class ExecutionList implements Runnable {
     private static final Logger log = Logger.getLogger(ExecutionList.class.getName());
 
     // The runnable,executor pairs to execute.
-    private final Queue<RunnableExecutorPair> runnables = new LinkedBlockingQueue<>();
+    private final Queue<RunnableExecutorPair> runnables = new LinkedBlockingQueue<RunnableExecutorPair>();
 
     // Boolean we use mark when execution has started.  Only accessed from within
     // synchronized blocks.
@@ -97,6 +97,7 @@ public final class ExecutionList implements Runnable {
      * added.  Pairs added after this method has started executing the list will
      * be executed immediately.
      */
+    @Override
     public void run() {
 
         // Lock while we update our state so the add method above will finish adding

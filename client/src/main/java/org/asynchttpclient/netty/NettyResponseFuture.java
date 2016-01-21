@@ -214,6 +214,7 @@ public final class NettyResponseFuture<V> extends AbstractListenableFuture<V> {
         return isDone.getAndSet(true) || isCancelled.get();
     }
 
+    @Override
     public final void done() {
 
         if (terminateAndExit())
@@ -234,6 +235,7 @@ public final class NettyResponseFuture<V> extends AbstractListenableFuture<V> {
         runListeners();
     }
 
+    @Override
     public final void abort(final Throwable t) {
 
         EX_EX_UPDATER.compareAndSet(this, null, new ExecutionException(t));
@@ -259,7 +261,7 @@ public final class NettyResponseFuture<V> extends AbstractListenableFuture<V> {
 
     @Override
     public CompletableFuture<V> toCompletableFuture() {
-        CompletableFuture<V> completable = new CompletableFuture<>();
+        final CompletableFuture<V> completable = new CompletableFuture<V>();
         addListener(new Runnable() {
             @Override
             @SuppressWarnings("unchecked")

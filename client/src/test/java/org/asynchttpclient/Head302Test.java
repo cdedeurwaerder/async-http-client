@@ -43,6 +43,7 @@ public class Head302Test extends AbstractBasicTest {
      * Handler that does Found (302) in response to HEAD method.
      */
     private static class Head302handler extends AbstractHandler {
+        @Override
         public void handle(String s, org.eclipse.jetty.server.Request r, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if ("HEAD".equalsIgnoreCase(request.getMethod())) {
                 if (request.getPathInfo().endsWith("_moved")) {
@@ -64,7 +65,8 @@ public class Head302Test extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testHEAD302() throws IOException, BrokenBarrierException, InterruptedException, ExecutionException, TimeoutException {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             final CountDownLatch l = new CountDownLatch(1);
             Request request = head("http://localhost:" + port1 + "/Test").build();
 
@@ -79,6 +81,8 @@ public class Head302Test extends AbstractBasicTest {
             if (!l.await(TIMEOUT, TimeUnit.SECONDS)) {
                 fail("Timeout out");
             }
+        } finally {
+            client.close();
         }
     }
 }

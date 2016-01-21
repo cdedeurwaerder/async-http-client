@@ -127,7 +127,7 @@ public class ResumableAsyncHandlerTest extends PowerMockTestCase {
         ResumableAsyncHandler handler = new ResumableAsyncHandler();
 
         ResumableListener resumableListener = PowerMockito.mock(ResumableListener.class);
-        doThrow(new IOException()).when(resumableListener).onBytesReceived(anyObject());
+        doThrow(new IOException()).when(resumableListener).onBytesReceived((ByteBuffer) anyObject());
         handler.setResumableListener(resumableListener);
 
         HttpResponseBodyPart bodyPart = PowerMockito.mock(HttpResponseBodyPart.class);

@@ -46,7 +46,8 @@ public class ThreadNameTest extends AbstractBasicTest {
     @Test(groups = "standalone")
     public void testThreadName() throws Exception {
         String threadPoolName = "ahc-" + (new Random().nextLong() & 0x7fffffffffffffffL);
-        try (AsyncHttpClient client = asyncHttpClient(config().setThreadPoolName(threadPoolName))) {
+        AsyncHttpClient client = asyncHttpClient(config().setThreadPoolName(threadPoolName));
+        try {
             Future<Response> f = client.prepareGet("http://localhost:" + port1 + "/").execute();
             f.get(3, TimeUnit.SECONDS);
 
@@ -61,6 +62,8 @@ public class ThreadNameTest extends AbstractBasicTest {
             }
 
             Assert.assertTrue(found, "must found threads starting with random string " + threadPoolName);
+        } finally {
+            client.close();
         }
     }
 }

@@ -26,7 +26,7 @@ public class Param {
         if (map == null)
             return null;
 
-        List<Param> params = new ArrayList<>(map.size());
+        List<Param> params = new ArrayList<Param>(map.size());
         for (Map.Entry<String, List<String>> entries : map.entrySet()) {
             String name = entries.getKey();
             for (String value : entries.getValue())
@@ -48,6 +48,7 @@ public class Param {
         return value;
     }
 
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -56,6 +57,7 @@ public class Param {
         return result;
     }
 
+    @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;

@@ -35,6 +35,7 @@ public class IdleStateHandlerTest extends AbstractBasicTest {
 
     private class IdleStateHandler extends AbstractHandler {
 
+        @Override
         public void handle(String s, Request r, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             try {
@@ -48,6 +49,7 @@ public class IdleStateHandlerTest extends AbstractBasicTest {
         }
     }
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
@@ -59,10 +61,13 @@ public class IdleStateHandlerTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void idleStateTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().setPooledConnectionIdleTimeout(10 * 1000))) {
+        AsyncHttpClient c = asyncHttpClient(config().setPooledConnectionIdleTimeout(10 * 1000));
+        try {
             c.prepareGet(getTargetUrl()).execute().get();
         } catch (ExecutionException e) {
             fail("Should allow to finish processing request.", e);
+        } finally {
+            c.close();
         }
     }
 }

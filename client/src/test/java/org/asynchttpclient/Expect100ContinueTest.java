@@ -37,6 +37,7 @@ import org.testng.annotations.Test;
 public class Expect100ContinueTest extends AbstractBasicTest {
 
     private static class ZeroCopyHandler extends AbstractHandler {
+        @Override
         public void handle(String s, Request r, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             int size = 10 * 1024;
@@ -61,7 +62,8 @@ public class Expect100ContinueTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void Expect100Continue() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.preparePut("http://localhost:" + port1 + "/")//
                     .setHeader(HttpHeaders.Names.EXPECT, HttpHeaders.Values.CONTINUE)//
                     .setBody(SIMPLE_TEXT_FILE)//
@@ -70,6 +72,8 @@ public class Expect100ContinueTest extends AbstractBasicTest {
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
             assertEquals(resp.getResponseBody(), SIMPLE_TEXT_FILE_STRING);
+        } finally {
+            client.close();
         }
     }
 }

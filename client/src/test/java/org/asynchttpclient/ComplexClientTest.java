@@ -26,7 +26,8 @@ public class ComplexClientTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void multipleRequestsTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             String body = "hello there";
 
             // once
@@ -38,15 +39,20 @@ public class ComplexClientTest extends AbstractBasicTest {
             response = c.preparePost(getTargetUrl()).setBody(body).setHeader("Content-Type", "text/html").execute().get(TIMEOUT, TimeUnit.SECONDS);
 
             assertEquals(response.getResponseBody(), body);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void urlWithoutSlashTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             String body = "hello there";
             Response response = c.preparePost(String.format("http://localhost:%d/foo/test", port1)).setBody(body).setHeader("Content-Type", "text/html").execute().get(TIMEOUT, TimeUnit.SECONDS);
             assertEquals(response.getResponseBody(), body);
+        } finally {
+            c.close();
         }
     }
 }

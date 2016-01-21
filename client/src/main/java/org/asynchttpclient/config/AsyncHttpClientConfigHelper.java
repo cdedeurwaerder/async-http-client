@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public class AsyncHttpClientConfigHelper {
 
@@ -44,31 +45,47 @@ public class AsyncHttpClientConfigHelper {
 
         private Properties parsePropertiesFile(String file) {
             Properties props = new Properties();
-            try (InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(file)) {
+            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(file);
+            try {
                 if (is != null) {
                     props.load(is);
                 } else {
                    //Try loading from this class classloader instead, e.g. for OSGi environments.
-                    try(InputStream is2 = this.getClass().getClassLoader().getResourceAsStream(file)) {
+                    InputStream is2 = this.getClass().getClassLoader().getResourceAsStream(file);
+                    try {
                         if (is2 != null) {
                             props.load(is2);
                         }
+                    } finally {
+                        if(null != is2)
+                        is2.close();
                     }
                 }
             } catch (IOException e) {
                 throw new IllegalArgumentException("Can't parse file", e);
+            } finally {
+                try {
+                    if(null != is)
+                    is.close();
+                } catch (IOException e) {
+                   //
+                }
             }
             return props;
         }
 
         public String getString(String key) {
-            return propsCache.computeIfAbsent(key, k -> {
-                String value = System.getProperty(k);
-                if (value == null)
-                    value = (String) customProperties.getProperty(k);
-                if (value == null)
-                    value = (String) defaultProperties.getProperty(k);
-                return value;
+            return propsCache.computeIfAbsent(key, new Function<String, String>() {
+
+                @Override
+                public String apply(String key) {
+                    String value = System.getProperty(key);
+                    if (value == null)
+                        value = customProperties.getProperty(key);
+                    if (value == null)
+                        value = defaultProperties.getProperty(key);
+                    return value;
+                }
             });
         }
 

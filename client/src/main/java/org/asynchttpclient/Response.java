@@ -125,6 +125,7 @@ public interface Response {
      * 
      * @return the textual representation
      */
+    @Override
     String toString();
 
     /**
@@ -170,7 +171,7 @@ public interface Response {
     SocketAddress getLocalAddress();
 
     class ResponseBuilder {
-        private final List<HttpResponseBodyPart> bodyParts = new ArrayList<>();
+        private final List<HttpResponseBodyPart> bodyParts = new ArrayList<HttpResponseBodyPart>();
         private HttpResponseStatus status;
         private HttpResponseHeaders headers;
 

@@ -114,7 +114,7 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
         this.headers = new DefaultHttpHeaders(validateHeaders);
         this.headers.add(prototype.getHeaders());
         if (isNonEmpty(prototype.getCookies())) {
-            this.cookies = new ArrayList<>(prototype.getCookies());
+            this.cookies = new ArrayList<Cookie>(prototype.getCookies());
         }
         this.byteData = prototype.getByteData();
         this.compositeByteData = prototype.getCompositeByteData();
@@ -123,10 +123,10 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
         this.streamData = prototype.getStreamData();
         this.bodyGenerator = prototype.getBodyGenerator();
         if (isNonEmpty(prototype.getFormParams())) {
-            this.formParams = new ArrayList<>(prototype.getFormParams());
+            this.formParams = new ArrayList<Param>(prototype.getFormParams());
         }
         if (isNonEmpty(prototype.getBodyParts())) {
-            this.bodyParts = new ArrayList<>(prototype.getBodyParts());
+            this.bodyParts = new ArrayList<Part>(prototype.getBodyParts());
         }
         this.virtualHost = prototype.getVirtualHost();
         this.contentLength = prototype.getContentLength();
@@ -211,11 +211,11 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
 
     private void lazyInitCookies() {
         if (this.cookies == null)
-            this.cookies = new ArrayList<>(3);
+            this.cookies = new ArrayList<Cookie>(3);
     }
 
     public T setCookies(Collection<Cookie> cookies) {
-        this.cookies = new ArrayList<>(cookies);
+        this.cookies = new ArrayList<Cookie>(cookies);
         return asDerivedType();
     }
 
@@ -325,7 +325,7 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
 
     public T addQueryParam(String name, String value) {
         if (queryParams == null)
-            queryParams = new ArrayList<>(1);
+            queryParams = new ArrayList<Param>(1);
         queryParams.add(new Param(name, value));
         return asDerivedType();
     }
@@ -354,7 +354,7 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
         resetNonMultipartData();
         resetMultipartData();
         if (this.formParams == null)
-            this.formParams = new ArrayList<>(1);
+            this.formParams = new ArrayList<Param>(1);
         this.formParams.add(new Param(name, value));
         return asDerivedType();
     }
@@ -374,13 +374,13 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
         resetFormParams();
         resetNonMultipartData();
         if (this.bodyParts == null)
-            this.bodyParts = new ArrayList<>();
+            this.bodyParts = new ArrayList<Part>();
         this.bodyParts.add(bodyPart);
         return asDerivedType();
     }
 
     public T setBodyParts(List<Part> bodyParts) {
-        this.bodyParts = new ArrayList<>(bodyParts);
+        this.bodyParts = new ArrayList<Part>(bodyParts);
         return asDerivedType();
     }
 
@@ -536,6 +536,7 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
         return uriEncoder.encode(tempUri, queryParams);
     }
 
+    @SuppressWarnings("unchecked")
     public Request build() {
         RequestBuilderBase<?> rb = executeSignatureCalculator();
         Uri finalUri = rb.computeUri();
@@ -543,9 +544,9 @@ public abstract class RequestBuilderBase<T extends RequestBuilderBase<T>> {
         long finalContentLength = rb.computeRequestContentLength();
 
         // make copies of mutable internal collections
-        List<Cookie> cookiesCopy = rb.cookies == null ? Collections.emptyList() : new ArrayList<>(rb.cookies);
-        List<Param> formParamsCopy = rb.formParams == null ? Collections.emptyList() : new ArrayList<>(rb.formParams);
-        List<Part> bodyPartsCopy = rb.bodyParts == null ? Collections.emptyList() : new ArrayList<>(rb.bodyParts);
+        List<Cookie> cookiesCopy = (List<Cookie>) (rb.cookies == null ? Collections.emptyList() : new ArrayList<Cookie>(rb.cookies));
+        List<Param> formParamsCopy = (List<Param>) (rb.formParams == null ? Collections.emptyList() : new ArrayList<Param>(rb.formParams));
+        List<Part> bodyPartsCopy = (List<Part>) (rb.bodyParts == null ? Collections.emptyList() : new ArrayList<Part>(rb.bodyParts));
 
         return new DefaultRequest(rb.method,//
                 finalUri,//

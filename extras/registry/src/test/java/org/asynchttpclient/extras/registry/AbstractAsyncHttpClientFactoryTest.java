@@ -69,25 +69,34 @@ public abstract class AbstractAsyncHttpClientFactoryTest {
     // ================================================================================================================
     @Test(groups = "standalone")
     public void testGetAsyncHttpClient() throws Exception {
-        try (AsyncHttpClient asyncHttpClient = AsyncHttpClientFactory.getAsyncHttpClient()) {
+        AsyncHttpClient asyncHttpClient = AsyncHttpClientFactory.getAsyncHttpClient();
+        try {
             Assert.assertTrue(asyncHttpClient.getClass().equals(DefaultAsyncHttpClient.class));
             assertClientWorks(asyncHttpClient);
+        } finally {
+            asyncHttpClient.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testGetAsyncHttpClientConfig() throws Exception {
-        try (AsyncHttpClient asyncHttpClient = AsyncHttpClientFactory.getAsyncHttpClient()) {
+        AsyncHttpClient asyncHttpClient = AsyncHttpClientFactory.getAsyncHttpClient();
+        try {
             Assert.assertTrue(asyncHttpClient.getClass().equals(DefaultAsyncHttpClient.class));
             assertClientWorks(asyncHttpClient);
+        } finally {
+            asyncHttpClient.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testGetAsyncHttpClientProvider() throws Exception {
-        try (AsyncHttpClient asyncHttpClient = AsyncHttpClientFactory.getAsyncHttpClient()) {
+        AsyncHttpClient asyncHttpClient = AsyncHttpClientFactory.getAsyncHttpClient();
+        try {
             Assert.assertTrue(asyncHttpClient.getClass().equals(DefaultAsyncHttpClient.class));
             assertClientWorks(asyncHttpClient);
+        } finally {
+            asyncHttpClient.close();
         }
     }
 

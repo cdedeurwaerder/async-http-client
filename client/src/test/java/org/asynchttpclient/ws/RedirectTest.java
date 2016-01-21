@@ -74,9 +74,10 @@ public class RedirectTest extends AbstractBasicTest {
 
     @Test(groups = "standalone", timeOut = 60000)
     public void testRedirectToWSResource() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true));
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             WebSocket websocket = c.prepareGet(getRedirectURL()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketListener() {
 
@@ -100,6 +101,8 @@ public class RedirectTest extends AbstractBasicTest {
             latch.await();
             assertEquals(text.get(), "OnOpen");
             websocket.close();
+        } finally {
+            c.close();
         }
     }
 

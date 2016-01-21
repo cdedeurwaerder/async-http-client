@@ -39,9 +39,10 @@ public class TextMessageTest extends AbstractBasicTest {
 
     @Test(groups = "standalone", timeOut = 60000)
     public void onOpen() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketListener() {
 
@@ -64,12 +65,15 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "OnOpen");
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000)
     public void onEmptyListenerTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             WebSocket websocket = null;
             try {
                 websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().build()).get();
@@ -77,23 +81,29 @@ public class TextMessageTest extends AbstractBasicTest {
                 fail();
             }
             assertTrue(websocket != null);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000, expectedExceptions = UnknownHostException.class)
     public void onFailureTest() throws Throwable {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             c.prepareGet("ws://abcdefg").execute(new WebSocketUpgradeHandler.Builder().build()).get();
         } catch (ExecutionException e) {
             throw e.getCause();
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000)
     public void onTimeoutCloseTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketListener() {
 
@@ -116,14 +126,17 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "OnClose");
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000)
     public void onClose() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try  {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketListener() {
 
@@ -148,14 +161,17 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "OnClose");
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000)
     public void echoText() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketTextListener() {
 
@@ -185,14 +201,17 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHO");
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000)
     public void echoDoubleListenerText() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(2);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketTextListener() {
 
@@ -244,14 +263,17 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHOECHO");
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void echoTwoMessagesTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(2);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             /* WebSocket websocket = */c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketTextListener() {
 
@@ -280,13 +302,16 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHOECHO");
+        } finally {
+            c.close();
         }
     }
 
     public void echoFragments() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketTextListener() {
 
@@ -317,15 +342,18 @@ public class TextMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHOECHO");
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone", timeOut = 60000)
     public void echoTextAndThenClose() throws Throwable {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch textLatch = new CountDownLatch(1);
             final CountDownLatch closeLatch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             final WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketTextListener() {
 
@@ -358,6 +386,8 @@ public class TextMessageTest extends AbstractBasicTest {
             closeLatch.await();
 
             assertEquals(text.get(), "ECHO");
+        } finally {
+            c.close();
         }
     }
 }

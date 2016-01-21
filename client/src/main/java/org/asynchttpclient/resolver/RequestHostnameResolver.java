@@ -67,7 +67,7 @@ public enum RequestHostnameResolver {
 
             @Override
             protected void onSuccess(List<InetAddress> value) throws Exception {
-                ArrayList<InetSocketAddress> socketAddresses = new ArrayList<>(value.size());
+                ArrayList<InetSocketAddress> socketAddresses = new ArrayList<InetSocketAddress>(value.size());
                 for (InetAddress a : value) {
                     socketAddresses.add(new InetSocketAddress(a, port));
                 }

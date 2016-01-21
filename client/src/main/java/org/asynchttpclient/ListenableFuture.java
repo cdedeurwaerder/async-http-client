@@ -137,7 +137,7 @@ public interface ListenableFuture<V> extends Future<V> {
         
         @Override
         public CompletableFuture<T> toCompletableFuture() {
-            CompletableFuture<T> future = new CompletableFuture<>();
+            CompletableFuture<T> future = new CompletableFuture<T>();
             future.completeExceptionally(e);
             return future;
         }

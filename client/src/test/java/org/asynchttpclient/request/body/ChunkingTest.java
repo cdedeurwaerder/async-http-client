@@ -60,7 +60,8 @@ public class ChunkingTest extends AbstractBasicTest {
     }
 
     public void doTestWithInputStreamBodyGenerator(InputStream is) throws Throwable {
-        try (AsyncHttpClient c = asyncHttpClient(httpClientBuilder())) {
+        AsyncHttpClient c = asyncHttpClient(httpClientBuilder());
+        try {
 
             RequestBuilder builder = post(getTargetUrl()).setBody(new InputStreamBodyGenerator(is));
 
@@ -68,11 +69,14 @@ public class ChunkingTest extends AbstractBasicTest {
 
             final ListenableFuture<Response> responseFuture = c.executeRequest(r);
             waitForAndAssertResponse(responseFuture);
+        } finally {
+            c.close();
         }
     }
 
     public void doTestWithFeedableBodyGenerator(InputStream is) throws Throwable {
-        try (AsyncHttpClient c = asyncHttpClient(httpClientBuilder())) {
+        AsyncHttpClient c = asyncHttpClient(httpClientBuilder());
+        try {
 
             final FeedableBodyGenerator feedableBodyGenerator = new UnboundedQueueFeedableBodyGenerator();
             Request r = post(getTargetUrl()).setBody(feedableBodyGenerator).build();
@@ -82,17 +86,22 @@ public class ChunkingTest extends AbstractBasicTest {
             feed(feedableBodyGenerator, is);
 
             waitForAndAssertResponse(responseFuture);
+        } finally {
+            c.close();
         }
     }
 
     private void feed(FeedableBodyGenerator feedableBodyGenerator, InputStream is) throws Exception {
-        try (InputStream inputStream = is) {
+        InputStream inputStream = is;
+        try {
             byte[] buffer = new byte[512];
             for (int i = 0; (i = inputStream.read(buffer)) > -1;) {
                 byte[] chunk = new byte[i];
                 System.arraycopy(buffer, 0, chunk, 0, i);
                 feedableBodyGenerator.feed(ByteBuffer.wrap(chunk), false);
             }
+        } finally {
+            inputStream.close();
         }
         feedableBodyGenerator.feed(ByteBuffer.allocate(0), true);
 

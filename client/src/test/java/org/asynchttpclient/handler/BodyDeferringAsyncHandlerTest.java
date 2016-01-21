@@ -46,6 +46,7 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
 
     public static class SlowAndBigHandler extends AbstractHandler {
 
+        @Override
         public void handle(String pathInContext, Request request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             httpResponse.setStatus(200);
@@ -100,6 +101,7 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
         }
     }
 
+    @Override
     public AbstractHandler configureHandler() throws Exception {
         return new SlowAndBigHandler();
     }
@@ -111,7 +113,8 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void deferredSimple() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig())) {
+        AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig());
+        try {
             BoundRequestBuilder r = client.prepareGet("http://localhost:" + port1 + "/deferredSimple");
 
             CountingOutputStream cos = new CountingOutputStream();
@@ -130,12 +133,15 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
             f.get();
             // it all should be here now
             assertEquals(cos.getByteCount(), HALF_GIG);
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone", enabled = false)
     public void deferredSimpleWithFailure() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig())) {
+        AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig());
+        try {
             BoundRequestBuilder r = client.prepareGet("http://localhost:" + port1 + "/deferredSimpleWithFailure").addHeader("X-FAIL-TRANSFER",
                     Boolean.TRUE.toString());
 
@@ -160,12 +166,15 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
             }
             // it's incomplete, there was an error
             assertNotEquals(cos.getByteCount(), HALF_GIG);
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void deferredInputStreamTrick() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig())) {
+        AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig());
+        try {
             BoundRequestBuilder r = client.prepareGet("http://localhost:" + port1 + "/deferredInputStreamTrick");
 
             PipedOutputStream pos = new PipedOutputStream();
@@ -193,12 +202,15 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
             // BodyDeferringInputStream does all.
             // it all should be here now
             assertEquals(cos.getByteCount(), HALF_GIG);
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void deferredInputStreamTrickWithFailure() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig())) {
+        AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig());
+        try {
             BoundRequestBuilder r = client.prepareGet("http://localhost:" + port1 + "/deferredInputStreamTrickWithFailure").addHeader("X-FAIL-TRANSFER",
                     Boolean.TRUE.toString());
             PipedOutputStream pos = new PipedOutputStream();
@@ -226,19 +238,24 @@ public class BodyDeferringAsyncHandlerTest extends AbstractBasicTest {
             } catch (IOException e) {
                 // good!
             }
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone", expectedExceptions = IOException.class)
     public void testConnectionRefused() throws IOException, ExecutionException, TimeoutException, InterruptedException {
         int newPortWithoutAnyoneListening = findFreePort();
-        try (AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig())) {
+        AsyncHttpClient client = asyncHttpClient(getAsyncHttpClientConfig());
+        try {
             BoundRequestBuilder r = client.prepareGet("http://localhost:" + newPortWithoutAnyoneListening + "/testConnectionRefused");
 
             CountingOutputStream cos = new CountingOutputStream();
             BodyDeferringAsyncHandler bdah = new BodyDeferringAsyncHandler(cos);
             r.execute(bdah);
             bdah.getResponse();
+        } finally {
+            client.close();
         }
     }
 }

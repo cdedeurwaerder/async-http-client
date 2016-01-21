@@ -39,6 +39,7 @@ public class FilePartLargeFileTest extends AbstractBasicTest {
     public AbstractHandler configureHandler() throws Exception {
         return new AbstractHandler() {
 
+            @Override
             public void handle(String target, Request baseRequest, HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 
                 ServletInputStream in = req.getInputStream();
@@ -62,9 +63,12 @@ public class FilePartLargeFileTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testPutImageFile() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000))) {
+        AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000));
+        try {
             Response response = client.preparePut(getTargetUrl()).addBodyPart(new FilePart("test", LARGE_IMAGE_FILE, "application/octet-stream", UTF_8)).execute().get();
             assertEquals(response.getStatusCode(), 200);
+        } finally {
+            client.close();
         }
     }
 
@@ -72,9 +76,12 @@ public class FilePartLargeFileTest extends AbstractBasicTest {
     public void testPutLargeTextFile() throws Exception {
         File file = createTempFile(1024 * 1024);
 
-        try (AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000))) {
+        AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000));
+        try {
             Response response = client.preparePut(getTargetUrl()).addBodyPart(new FilePart("test", file, "application/octet-stream", UTF_8)).execute().get();
             assertEquals(response.getStatusCode(), 200);
+        } finally {
+            client.close();
         }
     }
 }

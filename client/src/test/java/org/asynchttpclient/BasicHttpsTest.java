@@ -59,33 +59,49 @@ public class BasicHttpsTest extends HttpTest {
 
     @Test
     public void postBodyOverHttps() throws Throwable {
-        withClient(config().setSslEngineFactory(createSslEngineFactory())).run(client -> {
-            withServer(server).run(server -> {
-                server.enqueueEcho();
+        withClient(config().setSslEngineFactory(createSslEngineFactory())).run(new ClientFunction() {
+            
+            @Override
+            public void apply(final AsyncHttpClient client) throws Throwable {
+                withServer(server).run(new ServerFunction() {
+                    
+                    @Override
+                    public void apply(HttpServer server) throws Throwable {
+                        server.enqueueEcho();
 
-                Response resp = client.preparePost(getTargetUrl()).setBody(SIMPLE_TEXT_FILE).setHeader(CONTENT_TYPE, "text/html").execute().get();
-                assertNotNull(resp);
-                assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
-                assertEquals(resp.getResponseBody(), SIMPLE_TEXT_FILE_STRING);
-            });
+                        Response resp = client.preparePost(getTargetUrl()).setBody(SIMPLE_TEXT_FILE).setHeader(CONTENT_TYPE, "text/html").execute().get();
+                        assertNotNull(resp);
+                        assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
+                        assertEquals(resp.getResponseBody(), SIMPLE_TEXT_FILE_STRING);      
+                    }
+                });      
+            }
         });
     }
 
     @Test
     public void multipleSequentialPostRequestsOverHttps() throws Throwable {
-        withClient(config().setSslEngineFactory(createSslEngineFactory())).run(client -> {
-            withServer(server).run(server -> {
-                server.enqueueEcho();
-                server.enqueueEcho();
+        withClient(config().setSslEngineFactory(createSslEngineFactory())).run(new ClientFunction() {
+            
+            @Override
+            public void apply(final AsyncHttpClient client) throws Throwable {
+                withServer(server).run(new ServerFunction() {
+                    
+                    @Override
+                    public void apply(HttpServer server) throws Throwable {
+                        server.enqueueEcho();
+                        server.enqueueEcho();
 
-                String body = "hello there";
+                        String body = "hello there";
 
-                Response response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
-                assertEquals(response.getResponseBody(), body);
+                        Response response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
+                        assertEquals(response.getResponseBody(), body);
 
-                response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
-                assertEquals(response.getResponseBody(), body);
-            });
+                        response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
+                        assertEquals(response.getResponseBody(), body);      
+                    }
+                });      
+            }
         });
     }
 
@@ -99,94 +115,126 @@ public class BasicHttpsTest extends HttpTest {
             }
         };
 
-        withClient(config().setSslEngineFactory(createSslEngineFactory()).setKeepAliveStrategy(keepAliveStrategy)).run(client -> {
-            withServer(server).run(server -> {
-                server.enqueueEcho();
-                server.enqueueEcho();
-                server.enqueueEcho();
+        withClient(config().setSslEngineFactory(createSslEngineFactory()).setKeepAliveStrategy(keepAliveStrategy)).run(new ClientFunction() {
+            
+            @Override
+            public void apply(final AsyncHttpClient client) throws Throwable {
+                withServer(server).run(new ServerFunction() {
+                    
+                    @Override
+                    public void apply(HttpServer server) throws Throwable {
+                        server.enqueueEcho();
+                        server.enqueueEcho();
+                        server.enqueueEcho();
 
-                String body = "hello there";
+                        String body = "hello there";
 
-                client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute();
-                client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute();
+                        client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute();
+                        client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute();
 
-                Response response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get();
-                assertEquals(response.getResponseBody(), body);
-            });
+                        Response response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get();
+                        assertEquals(response.getResponseBody(), body);      
+                    }
+                });      
+            }
         });
     }
 
     @Test
     public void reconnectAfterFailedCertificationPath() throws Throwable {
 
-        AtomicBoolean trust = new AtomicBoolean();
+        final AtomicBoolean trust = new AtomicBoolean();
 
-        withClient(config().setSslEngineFactory(createSslEngineFactory(trust))).run(client -> {
-            withServer(server).run(server -> {
-                server.enqueueEcho();
-                server.enqueueEcho();
+        withClient(config().setSslEngineFactory(createSslEngineFactory(trust))).run(new ClientFunction() {
+            
+            @Override
+            public void apply(final AsyncHttpClient client) throws Throwable {
+                withServer(server).run(new ServerFunction() {
+                    
+                    @Override
+                    public void apply(HttpServer server) throws Throwable {
+                        server.enqueueEcho();
+                        server.enqueueEcho();
 
-                String body = "hello there";
+                        String body = "hello there";
 
-                // first request fails because server certificate is rejected
-                    Throwable cause = null;
-                    try {
-                        client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
-                    } catch (final ExecutionException e) {
-                        cause = e.getCause();
+                        // first request fails because server certificate is rejected
+                            Throwable cause = null;
+                            try {
+                                client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
+                            } catch (final ExecutionException e) {
+                                cause = e.getCause();
+                            }
+                            assertNotNull(cause);
+
+                            // second request should succeed
+                            trust.set(true);
+                            Response response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
+
+                            assertEquals(response.getResponseBody(), body);      
                     }
-                    assertNotNull(cause);
-
-                    // second request should succeed
-                    trust.set(true);
-                    Response response = client.preparePost(getTargetUrl()).setBody(body).setHeader(CONTENT_TYPE, "text/html").execute().get(TIMEOUT, SECONDS);
-
-                    assertEquals(response.getResponseBody(), body);
-                });
+                });      
+            }
         });
     }
 
     @Test(timeOut = 2000, expectedExceptions = SSLHandshakeException.class)
     public void failInstantlyIfNotAllowedSelfSignedCertificate() throws Throwable {
-        withClient(config().setRequestTimeout(2000)).run(client -> {
-            withServer(server).run(server -> {
-                server.enqueueEcho();
-                try {
-                    client.prepareGet(getTargetUrl()).execute().get(TIMEOUT, SECONDS);
-                } catch (ExecutionException e) {
-                    throw e.getCause().getCause();
-                }
-            });
+        withClient(config().setRequestTimeout(2000)).run(new ClientFunction() {
+            
+            @Override
+            public void apply(final AsyncHttpClient client) throws Throwable {
+                withServer(server).run(new ServerFunction() {
+                    
+                    @Override
+                    public void apply(HttpServer server) throws Throwable {
+                        server.enqueueEcho();
+                        try {
+                            client.prepareGet(getTargetUrl()).execute().get(TIMEOUT, SECONDS);
+                        } catch (ExecutionException e) {
+                            throw e.getCause().getCause();
+                        }      
+                    }
+                });      
+            }
         });
     }
 
     @Test(groups = "standalone")
     public void testNormalEventsFired() throws Throwable {
-        withClient(config().setSslEngineFactory(createSslEngineFactory())).run(client -> {
-            withServer(server).run(server -> {
-                EventCollectingHandler handler = new EventCollectingHandler();
+        withClient(config().setSslEngineFactory(createSslEngineFactory())).run(new ClientFunction() {
+            
+            @Override
+            public void apply(final AsyncHttpClient client) throws Throwable {
+                withServer(server).run(new ServerFunction() {
+                    
+                    @Override
+                    public void apply(HttpServer server) throws Throwable {
+                        EventCollectingHandler handler = new EventCollectingHandler();
 
-                server.enqueueEcho();
-                client.preparePost(getTargetUrl()).setBody("whatever").execute(handler).get(3, SECONDS);
-                handler.waitForCompletion(3, SECONDS);
+                        server.enqueueEcho();
+                        client.preparePost(getTargetUrl()).setBody("whatever").execute(handler).get(3, SECONDS);
+                        handler.waitForCompletion(3, SECONDS);
 
-                Object[] expectedEvents = new Object[] { //
-                CONNECTION_POOL_EVENT,//
-                        HOSTNAME_RESOLUTION_EVENT,//
-                        HOSTNAME_RESOLUTION_SUCCESS_EVENT,//
-                        CONNECTION_OPEN_EVENT,//
-                        CONNECTION_SUCCESS_EVENT,//
-                        TLS_HANDSHAKE_EVENT,//
-                        TLS_HANDSHAKE_SUCCESS_EVENT,//
-                        REQUEST_SEND_EVENT,//
-                        HEADERS_WRITTEN_EVENT,//
-                        STATUS_RECEIVED_EVENT,//
-                        HEADERS_RECEIVED_EVENT,//
-                        CONNECTION_OFFER_EVENT,//
-                        COMPLETED_EVENT };
+                        Object[] expectedEvents = new Object[] { //
+                        CONNECTION_POOL_EVENT,//
+                                HOSTNAME_RESOLUTION_EVENT,//
+                                HOSTNAME_RESOLUTION_SUCCESS_EVENT,//
+                                CONNECTION_OPEN_EVENT,//
+                                CONNECTION_SUCCESS_EVENT,//
+                                TLS_HANDSHAKE_EVENT,//
+                                TLS_HANDSHAKE_SUCCESS_EVENT,//
+                                REQUEST_SEND_EVENT,//
+                                HEADERS_WRITTEN_EVENT,//
+                                STATUS_RECEIVED_EVENT,//
+                                HEADERS_RECEIVED_EVENT,//
+                                CONNECTION_OFFER_EVENT,//
+                                COMPLETED_EVENT };
 
-                assertEquals(handler.firedEvents.toArray(), expectedEvents, "Got " + Arrays.toString(handler.firedEvents.toArray()));
-            });
+                        assertEquals(handler.firedEvents.toArray(), expectedEvents, "Got " + Arrays.toString(handler.firedEvents.toArray()));      
+                    }
+                });      
+            }
         });
     }
 }

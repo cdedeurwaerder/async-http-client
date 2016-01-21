@@ -19,7 +19,7 @@ import java.util.concurrent.BlockingQueue;
 public final class BoundedQueueFeedableBodyGenerator extends QueueBasedFeedableBodyGenerator<BlockingQueue<BodyChunk>> {
 
     public BoundedQueueFeedableBodyGenerator(int capacity) {
-        super(new ArrayBlockingQueue<>(capacity, true));
+        super(new ArrayBlockingQueue<BodyChunk>(capacity, true));
     }
 
     @Override

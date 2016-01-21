@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class UnboundedQueueFeedableBodyGenerator extends QueueBasedFeedableBodyGenerator<ConcurrentLinkedQueue<BodyChunk>> {
 
     public UnboundedQueueFeedableBodyGenerator() {
-        super(new ConcurrentLinkedQueue<>());
+        super(new ConcurrentLinkedQueue<BodyChunk>());
     }
 
     @Override

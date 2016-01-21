@@ -41,6 +41,7 @@ public class WebDavBasicTest extends AbstractBasicTest {
 
     protected Embedded embedded;
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
 
@@ -75,11 +76,13 @@ public class WebDavBasicTest extends AbstractBasicTest {
         embedded.start();
     }
 
+    @Override
     @AfterClass(alwaysRun = true)
     public void tearDownGlobal() throws InterruptedException, Exception {
         embedded.stop();
     }
 
+    @Override
     protected String getTargetUrl() {
         return String.format("http://localhost:%s/folder1", port1);
     }
@@ -87,42 +90,55 @@ public class WebDavBasicTest extends AbstractBasicTest {
     @AfterMethod(alwaysRun = true)
     // FIXME not sure that's threadsafe
     public void clean() throws InterruptedException, Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             c.executeRequest(delete(getTargetUrl())).get();
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void mkcolWebDavTest1() throws InterruptedException, IOException, ExecutionException {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Request mkcolRequest = new RequestBuilder("MKCOL").setUrl(getTargetUrl()).build();
             Response response = c.executeRequest(mkcolRequest).get();
             assertEquals(response.getStatusCode(), 201);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void mkcolWebDavTest2() throws InterruptedException, IOException, ExecutionException {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Request mkcolRequest = new RequestBuilder("MKCOL").setUrl(getTargetUrl() + "/folder2").build();
             Response response = c.executeRequest(mkcolRequest).get();
             assertEquals(response.getStatusCode(), 409);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void basicPropFindWebDavTest() throws InterruptedException, IOException, ExecutionException {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Request propFindRequest = new RequestBuilder("PROPFIND").setUrl(getTargetUrl()).build();
             Response response = c.executeRequest(propFindRequest).get();
 
             assertEquals(response.getStatusCode(), 404);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void propFindWebDavTest() throws InterruptedException, IOException, ExecutionException {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Request mkcolRequest = new RequestBuilder("MKCOL").setUrl(getTargetUrl()).build();
             Response response = c.executeRequest(mkcolRequest).get();
             assertEquals(response.getStatusCode(), 201);
@@ -136,12 +152,15 @@ public class WebDavBasicTest extends AbstractBasicTest {
 
             assertEquals(response.getStatusCode(), 207);
             assertTrue(response.getResponseBody().contains("<status>HTTP/1.1 200 OK</status>"));
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void propFindCompletionHandlerWebDavTest() throws InterruptedException, IOException, ExecutionException {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             Request mkcolRequest = new RequestBuilder("MKCOL").setUrl(getTargetUrl()).build();
             Response response = c.executeRequest(mkcolRequest).get();
             assertEquals(response.getStatusCode(), 201);
@@ -165,6 +184,8 @@ public class WebDavBasicTest extends AbstractBasicTest {
 
             assertNotNull(webDavResponse);
             assertEquals(webDavResponse.getStatusCode(), 200);
+        } finally {
+            c.close();
         }
     }
 }

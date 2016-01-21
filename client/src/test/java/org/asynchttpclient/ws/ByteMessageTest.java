@@ -37,9 +37,10 @@ public class ByteMessageTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void echoByte() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<byte[]> text = new AtomicReference<>(new byte[0]);
+            final AtomicReference<byte[]> text = new AtomicReference<byte[]>(new byte[0]);
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketByteListener() {
 
@@ -70,14 +71,17 @@ public class ByteMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHO".getBytes());
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void echoTwoMessagesTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(2);
-            final AtomicReference<byte[]> text = new AtomicReference<>(null);
+            final AtomicReference<byte[]> text = new AtomicReference<byte[]>(null);
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketByteListener() {
 
@@ -115,14 +119,17 @@ public class ByteMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHOECHO".getBytes());
+        } finally {
+            c.close();
         }
     }
 
     @Test
     public void echoOnOpenMessagesTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(2);
-            final AtomicReference<byte[]> text = new AtomicReference<>(null);
+            final AtomicReference<byte[]> text = new AtomicReference<byte[]>(null);
 
             /* WebSocket websocket = */c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketByteListener() {
 
@@ -159,13 +166,16 @@ public class ByteMessageTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHOECHO".getBytes());
+        } finally {
+            c.close();
         }
     }
 
     public void echoFragments() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<byte[]> text = new AtomicReference<>(null);
+            final AtomicReference<byte[]> text = new AtomicReference<byte[]>(null);
 
             WebSocket websocket = c.prepareGet(getTargetUrl()).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketByteListener() {
 
@@ -202,6 +212,8 @@ public class ByteMessageTest extends AbstractBasicTest {
             websocket.stream("ECHO".getBytes(), true);
             latch.await();
             assertEquals(text.get(), "ECHOECHO".getBytes());
+        } finally {
+            c.close();
         }
     }
 }

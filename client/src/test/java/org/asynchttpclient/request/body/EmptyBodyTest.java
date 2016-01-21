@@ -48,6 +48,7 @@ import org.testng.annotations.Test;
  */
 public class EmptyBodyTest extends AbstractBasicTest {
     private class NoBodyResponseHandler extends AbstractHandler {
+        @Override
         public void handle(String s, Request request, HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 
             if (!req.getMethod().equalsIgnoreCase("PUT")) {
@@ -66,18 +67,21 @@ public class EmptyBodyTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testEmptyBody() throws IOException {
-        try (AsyncHttpClient ahc = asyncHttpClient()) {
+        AsyncHttpClient ahc = asyncHttpClient();
+        try {
             final AtomicBoolean err = new AtomicBoolean(false);
-            final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
             final AtomicBoolean status = new AtomicBoolean(false);
             final AtomicInteger headers = new AtomicInteger(0);
             final CountDownLatch latch = new CountDownLatch(1);
             ahc.executeRequest(ahc.prepareGet(getTargetUrl()).build(), new AsyncHandler<Object>() {
+                @Override
                 public void onThrowable(Throwable t) {
                     fail("Got throwable.", t);
                     err.set(true);
                 }
 
+                @Override
                 public State onBodyPartReceived(HttpResponseBodyPart e) throws Exception {
                     byte[] bytes = e.getBodyPartBytes();
 
@@ -90,11 +94,13 @@ public class EmptyBodyTest extends AbstractBasicTest {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onStatusReceived(HttpResponseStatus e) throws Exception {
                     status.set(true);
                     return AsyncHandler.State.CONTINUE;
                 }
 
+                @Override
                 public State onHeadersReceived(HttpResponseHeaders e) throws Exception {
                     if (headers.incrementAndGet() == 2) {
                         throw new Exception("Analyze this.");
@@ -102,6 +108,7 @@ public class EmptyBodyTest extends AbstractBasicTest {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public Object onCompleted() throws Exception {
                     latch.countDown();
                     return null;
@@ -116,12 +123,15 @@ public class EmptyBodyTest extends AbstractBasicTest {
             assertEquals(queue.size(), 0);
             assertTrue(status.get());
             assertEquals(headers.get(), 1);
+        } finally {
+            ahc.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testPutEmptyBody() throws Exception {
-        try (AsyncHttpClient ahc = asyncHttpClient()) {
+        AsyncHttpClient ahc = asyncHttpClient();
+        try {
             Response response = ahc.preparePut(getTargetUrl()).setBody("String").execute().get();
 
             assertNotNull(response);
@@ -129,6 +139,8 @@ public class EmptyBodyTest extends AbstractBasicTest {
             assertEquals(response.getResponseBody(), "");
             assertTrue(response.getResponseBodyAsStream() instanceof InputStream);
             assertEquals(response.getResponseBodyAsStream().read(), -1);
+        } finally {
+            ahc.close();
         }
     }
 }

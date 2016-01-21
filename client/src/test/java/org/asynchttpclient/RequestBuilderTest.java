@@ -128,7 +128,7 @@ public class RequestBuilderTest {
         RequestBuilder requestBuilder = new RequestBuilder();
         assertTrue(requestBuilder.headers.isEmpty(), "Headers should be empty by default.");
 
-        Map<String, Collection<String>> headers = new HashMap<>();
+        Map<String, Collection<String>> headers = new HashMap<String, Collection<String>>();
         headers.put("Content-Type", Collections.singleton("application/json"));
         requestBuilder.setHeaders(headers);
         assertTrue(requestBuilder.headers.contains("Content-Type"), "headers set by setHeaders have not been set");

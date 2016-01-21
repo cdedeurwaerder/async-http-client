@@ -35,6 +35,7 @@ public class ByteBufferCapacityTest extends AbstractBasicTest {
 
     private class BasicHandler extends AbstractHandler {
 
+        @Override
         public void handle(String s, Request r, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             Enumeration<?> e = httpRequest.getHeaderNames();
@@ -71,7 +72,8 @@ public class ByteBufferCapacityTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void basicByteBufferTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             File largeFile = createTempFile(1024 * 100 * 10);
             final AtomicInteger byteReceived = new AtomicInteger();
 
@@ -88,9 +90,12 @@ public class ByteBufferCapacityTest extends AbstractBasicTest {
             assertEquals(response.getStatusCode(), 200);
             assertEquals(byteReceived.get(), largeFile.length());
             assertEquals(response.getResponseBody().length(), largeFile.length());
+        } finally {
+            c.close();
         }
     }
 
+    @Override
     public String getTargetUrl() {
         return String.format("http://localhost:%d/foo/test", port1);
     }

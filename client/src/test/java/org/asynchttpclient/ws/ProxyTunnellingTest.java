@@ -60,6 +60,7 @@ public class ProxyTunnellingTest extends AbstractBasicTest {
         };
     }
 
+    @Override
     @AfterMethod(alwaysRun = true)
     public void tearDownGlobal() throws Exception {
         server.stop();
@@ -84,9 +85,10 @@ public class ProxyTunnellingTest extends AbstractBasicTest {
 
         // CONNECT happens over HTTP, not HTTPS
         ProxyServer ps = proxyServer("localhost", port1).build();
-        try (AsyncHttpClient asyncHttpClient = asyncHttpClient(config().setProxyServer(ps).setAcceptAnyCertificate(true))) {
+        AsyncHttpClient asyncHttpClient = asyncHttpClient(config().setProxyServer(ps).setAcceptAnyCertificate(true));
+        try {
             final CountDownLatch latch = new CountDownLatch(1);
-            final AtomicReference<String> text = new AtomicReference<>("");
+            final AtomicReference<String> text = new AtomicReference<String>("");
 
             WebSocket websocket = asyncHttpClient.prepareGet(targetUrl).execute(new WebSocketUpgradeHandler.Builder().addWebSocketListener(new WebSocketTextListener() {
 
@@ -116,6 +118,8 @@ public class ProxyTunnellingTest extends AbstractBasicTest {
 
             latch.await();
             assertEquals(text.get(), "ECHO");
+        } finally {
+            asyncHttpClient.close();
         }
     }
 }

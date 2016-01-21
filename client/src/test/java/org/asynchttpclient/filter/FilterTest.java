@@ -39,6 +39,7 @@ public class FilterTest extends AbstractBasicTest {
 
     private static class BasicHandler extends AbstractHandler {
 
+        @Override
         public void handle(String s, org.eclipse.jetty.server.Request r, HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, ServletException {
 
             Enumeration<?> e = httpRequest.getHeaderNames();
@@ -59,23 +60,28 @@ public class FilterTest extends AbstractBasicTest {
         return new BasicHandler();
     }
 
+    @Override
     public String getTargetUrl() {
         return String.format("http://localhost:%d/foo/test", port1);
     }
 
     @Test(groups = "standalone")
     public void basicTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().addRequestFilter(new ThrottleRequestFilter(100)))) {
+        AsyncHttpClient c = asyncHttpClient(config().addRequestFilter(new ThrottleRequestFilter(100)));
+        try {
             Response response = c.preparePost(getTargetUrl()).execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 200);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void loadThrottleTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().addRequestFilter(new ThrottleRequestFilter(10)))) {
-            List<Future<Response>> futures = new ArrayList<>();
+        AsyncHttpClient c = asyncHttpClient(config().addRequestFilter(new ThrottleRequestFilter(10)));
+        try {
+            List<Future<Response>> futures = new ArrayList<Future<Response>>();
             for (int i = 0; i < 200; i++) {
                 futures.add(c.preparePost(getTargetUrl()).execute());
             }
@@ -85,16 +91,21 @@ public class FilterTest extends AbstractBasicTest {
                 assertNotNull(f.get());
                 assertEquals(r.getStatusCode(), 200);
             }
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void maxConnectionsText() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().addRequestFilter(new ThrottleRequestFilter(0, 1000)))) {
+        AsyncHttpClient c = asyncHttpClient(config().addRequestFilter(new ThrottleRequestFilter(0, 1000)));
+        try {
             c.preparePost(getTargetUrl()).execute().get();
             fail("Should have timed out");
         } catch (ExecutionException ex) {
             assertTrue(ex.getCause() instanceof FilterException);
+        } finally {
+            c.close();
         }
     }
 
@@ -107,11 +118,13 @@ public class FilterTest extends AbstractBasicTest {
                 return ctx;
             }
         };
-
-        try (AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter))) {
+        AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter));
+        try {
             Response response = c.preparePost(getTargetUrl()).execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 200);
+        } finally {
+            c.close();
         }
     }
 
@@ -120,6 +133,7 @@ public class FilterTest extends AbstractBasicTest {
 
         final AtomicBoolean replay = new AtomicBoolean(true);
         ResponseFilter responseFilter = new ResponseFilter() {
+            @Override
             public <T> FilterContext<T> filter(FilterContext<T> ctx) throws FilterException {
                 if (replay.getAndSet(false)) {
                     Request request = new RequestBuilder(ctx.getRequest()).addHeader("X-Replay", "true").build();
@@ -128,12 +142,14 @@ public class FilterTest extends AbstractBasicTest {
                 return ctx;
             }
         };
-
-        try (AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter))) {
+        AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter));
+        try {
             Response response = c.preparePost(getTargetUrl()).execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 200);
             assertEquals(response.getHeader("X-Replay"), "true");
+        } finally {
+            c.close();
         }
     }
 
@@ -142,6 +158,7 @@ public class FilterTest extends AbstractBasicTest {
 
         final AtomicBoolean replay = new AtomicBoolean(true);
         ResponseFilter responseFilter = new ResponseFilter() {
+            @Override
             public <T> FilterContext<T> filter(FilterContext<T> ctx) throws FilterException {
                 if (ctx.getResponseStatus() != null && ctx.getResponseStatus().getStatusCode() == 200 && replay.getAndSet(false)) {
                     Request request = new RequestBuilder(ctx.getRequest()).addHeader("X-Replay", "true").build();
@@ -150,12 +167,14 @@ public class FilterTest extends AbstractBasicTest {
                 return ctx;
             }
         };
-
-        try (AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter))) {
+        AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter));
+        try {
             Response response = c.preparePost(getTargetUrl()).execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 200);
             assertEquals(response.getHeader("X-Replay"), "true");
+        } finally {
+            c.close();
         }
     }
 
@@ -164,6 +183,7 @@ public class FilterTest extends AbstractBasicTest {
 
         final AtomicBoolean replay = new AtomicBoolean(true);
         ResponseFilter responseFilter = new ResponseFilter() {
+            @Override
             public <T> FilterContext<T> filter(FilterContext<T> ctx) throws FilterException {
                 if (ctx.getResponseHeaders() != null && ctx.getResponseHeaders().getHeaders().get("Ping").equals("Pong") && replay.getAndSet(false)) {
                     Request request = new RequestBuilder(ctx.getRequest()).addHeader("Ping", "Pong").build();
@@ -173,11 +193,14 @@ public class FilterTest extends AbstractBasicTest {
             }
         };
 
-        try (AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter))) {
+        AsyncHttpClient c = asyncHttpClient(config().addResponseFilter(responseFilter));
+        try {
             Response response = c.preparePost(getTargetUrl()).addHeader("Ping", "Pong").execute().get();
             assertNotNull(response);
             assertEquals(response.getStatusCode(), 200);
             assertEquals(response.getHeader("Ping"), "Pong");
+        } finally {
+            c.close();
         }
     }
 }

@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class ByteBufUtilsTest {
 
     @Test
     public void testByteBufs2BytesEmptyList() {
-        byte[] output = ByteBufUtils.byteBufs2Bytes(Collections.emptyList());
+        byte[] output = ByteBufUtils.byteBufs2Bytes(new ArrayList<ByteBuf>());
         assertEquals(output, ByteBufUtils.EMPTY_BYTE_ARRAY,
                 "When an empty list is passed to byteBufs2Bytes, an empty byte array should be returned");
     }
@@ -52,7 +53,7 @@ public class ByteBufUtilsTest {
         byte[] input2 = "testdata2".getBytes();
         byte[] input3 = "testdata3333".getBytes();
 
-        List<ByteBuf> byteBufList = new LinkedList<>();
+        List<ByteBuf> byteBufList = new LinkedList<ByteBuf>();
         byteBufList.add(Unpooled.copiedBuffer(input1));
         byteBufList.add(Unpooled.copiedBuffer(input2));
         byteBufList.add(Unpooled.copiedBuffer(input3));

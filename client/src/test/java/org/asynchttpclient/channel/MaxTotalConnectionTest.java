@@ -46,9 +46,9 @@ public class MaxTotalConnectionTest extends AbstractBasicTest {
                 .setMaxConnections(1)//
                 .setMaxConnectionsPerHost(1)//
                 .build();
-
-        try (AsyncHttpClient client = asyncHttpClient(config)) {
-            List<ListenableFuture<Response>> futures = new ArrayList<>();
+        AsyncHttpClient client = asyncHttpClient(config);
+        try {
+            List<ListenableFuture<Response>> futures = new ArrayList<ListenableFuture<Response>>();
             for (int i = 0; i < urls.length; i++) {
                 futures.add(client.prepareGet(urls[i]).execute());
             }
@@ -68,6 +68,8 @@ public class MaxTotalConnectionTest extends AbstractBasicTest {
 
             Assert.assertEquals(1, i);
             Assert.assertTrue(caughtError);
+        } finally {
+            client.close();
         }
     }
 
@@ -76,8 +78,8 @@ public class MaxTotalConnectionTest extends AbstractBasicTest {
         String[] urls = new String[] { "http://google.com", "http://gatling.io" };
 
         final CountDownLatch latch = new CountDownLatch(2);
-        final AtomicReference<Throwable> ex = new AtomicReference<>();
-        final AtomicReference<String> failedUrl = new AtomicReference<>();
+        final AtomicReference<Throwable> ex = new AtomicReference<Throwable>();
+        final AtomicReference<String> failedUrl = new AtomicReference<String>();
 
         AsyncHttpClientConfig config = config()//
                 .setConnectTimeout(1000)//
@@ -86,8 +88,9 @@ public class MaxTotalConnectionTest extends AbstractBasicTest {
                 .setMaxConnections(2)//
                 .setMaxConnectionsPerHost(1)//
                 .build();
-
-        try (AsyncHttpClient client = asyncHttpClient(config)) {
+        
+        AsyncHttpClient client = asyncHttpClient(config);
+        try {
             for (String url : urls) {
                 final String thisUrl = url;
                 client.prepareGet(url).execute(new AsyncCompletionHandlerBase() {
@@ -111,6 +114,8 @@ public class MaxTotalConnectionTest extends AbstractBasicTest {
             latch.await();
             assertNull(ex.get());
             assertNull(failedUrl.get());
+        } finally {
+            client.close();
         }
     }
 }

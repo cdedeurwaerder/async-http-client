@@ -37,7 +37,7 @@ public class HttpServer implements Closeable {
     private int httpPort;
     private int httpsPort;
     private Server server;
-    private final ConcurrentLinkedQueue<Handler> handlers = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Handler> handlers = new ConcurrentLinkedQueue<Handler>();
     
     @FunctionalInterface
     public interface HttpServletResponseConsumer {
@@ -71,7 +71,14 @@ public class HttpServer implements Closeable {
     }
 
     public void enqueueOk() {
-        enqueueResponse(response -> response.setStatus(200));
+        enqueueResponse(new HttpServletResponseConsumer() {
+            
+            @Override
+            public void apply(HttpServletResponse response)
+                    throws IOException, ServletException {
+                response.setStatus(200);
+            }
+        });
     }
 
     public void enqueueResponse(HttpServletResponseConsumer c) {
@@ -82,10 +89,15 @@ public class HttpServer implements Closeable {
         handlers.offer(new EchoHandler());
     }
 
-    public void enqueueRedirect(int status, String location) {
-        enqueueResponse(response -> {
-            response.setStatus(status);
-            response.setHeader(HttpHeaders.Names.LOCATION, location);
+    public void enqueueRedirect(final int status, final String location) {
+        enqueueResponse(new HttpServletResponseConsumer() {
+            
+            @Override
+            public void apply(HttpServletResponse response)
+                    throws IOException, ServletException {
+                response.setStatus(status);
+                response.setHeader(HttpHeaders.Names.LOCATION, location);
+            }
         });
     }
 
@@ -189,7 +201,9 @@ public class HttpServer implements Closeable {
             if (delay != null) {
                 try {
                     Thread.sleep(Long.parseLong(delay));
-                } catch (NumberFormatException | InterruptedException e1) {
+                } catch (NumberFormatException e1) {
+                    throw new ServletException(e1);
+                } catch (InterruptedException e1) {
                     throw new ServletException(e1);
                 }
             }

@@ -40,13 +40,14 @@ public class NettyReactiveStreamsTest extends ReactiveStreamsTest {
 
     @Test(groups = "standalone")
     public void testRetryingOnFailingStream() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             final CountDownLatch streamStarted = new CountDownLatch(1); // allows us to wait until subscriber has received the first body chunk
             final CountDownLatch streamOnHold = new CountDownLatch(1); // allows us to hold the subscriber from processing further body chunks
             final CountDownLatch replayingRequest = new CountDownLatch(1); // allows us to block until the request is being replayed ( this is what we want to test here!)
 
             // a ref to the publisher is needed to get a hold on the channel (if there is a better way, this should be changed) 
-            final AtomicReference<StreamedResponsePublisher> publisherRef = new AtomicReference<>(null);
+            final AtomicReference<StreamedResponsePublisher> publisherRef = new AtomicReference<StreamedResponsePublisher>(null);
 
             // executing the request
             client.preparePost(getTargetUrl())
@@ -89,6 +90,8 @@ public class NettyReactiveStreamsTest extends ReactiveStreamsTest {
 
             // Change this if there is a better way of stating the test succeeded 
             assertTrue(true);
+        } finally {
+            client.close();
         }
     }
 

@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
 
 public class Redirect30xInterceptor {
 
-    public static final Set<Integer> REDIRECT_STATUSES = new HashSet<>();
+    public static final Set<Integer> REDIRECT_STATUSES = new HashSet<Integer>();
     static {
         REDIRECT_STATUSES.add(MOVED_PERMANENTLY_301);
         REDIRECT_STATUSES.add(FOUND_302);

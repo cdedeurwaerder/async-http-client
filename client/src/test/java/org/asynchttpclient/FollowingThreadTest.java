@@ -44,30 +44,37 @@ public class FollowingThreadTest extends AbstractBasicTest {
 
                     private int status;
 
+                    @Override
                     public void run() {
                         final CountDownLatch l = new CountDownLatch(1);
-                        try (AsyncHttpClient ahc = asyncHttpClient(config().setFollowRedirect(true))) {
+                        AsyncHttpClient ahc = asyncHttpClient(config().setFollowRedirect(true));
+                        try {
                             ahc.prepareGet("http://www.google.com/").execute(new AsyncHandler<Integer>() {
 
+                                @Override
                                 public void onThrowable(Throwable t) {
                                     t.printStackTrace();
                                 }
 
+                                @Override
                                 public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
                                     System.out.println(new String(bodyPart.getBodyPartBytes()));
                                     return State.CONTINUE;
                                 }
 
+                                @Override
                                 public State onStatusReceived(HttpResponseStatus responseStatus) throws Exception {
                                     status = responseStatus.getStatusCode();
                                     System.out.println(responseStatus.getStatusText());
                                     return State.CONTINUE;
                                 }
 
+                                @Override
                                 public State onHeadersReceived(HttpResponseHeaders headers) throws Exception {
                                     return State.CONTINUE;
                                 }
 
+                                @Override
                                 public Integer onCompleted() throws Exception {
                                     l.countDown();
                                     return status;
@@ -78,7 +85,13 @@ public class FollowingThreadTest extends AbstractBasicTest {
                         } catch (Exception e) {
                             e.printStackTrace();
                         } finally {
+                            
                             countDown.countDown();
+                            try {
+                                ahc.close();
+                            } catch (IOException e) {
+                               //
+                            }
                         }
                     }
                 });

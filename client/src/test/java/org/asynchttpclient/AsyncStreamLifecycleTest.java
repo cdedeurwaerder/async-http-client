@@ -57,6 +57,7 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
     @Override
     public AbstractHandler configureHandler() throws Exception {
         return new AbstractHandler() {
+            @Override
             public void handle(String s, Request request, HttpServletRequest req, final HttpServletResponse resp) throws IOException, ServletException {
                 resp.setContentType("text/plain;charset=utf-8");
                 resp.setStatus(200);
@@ -64,6 +65,7 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
                 continuation.suspend();
                 final PrintWriter writer = resp.getWriter();
                 executorService.submit(new Runnable() {
+                    @Override
                     public void run() {
                         try {
                             Thread.sleep(100);
@@ -76,6 +78,7 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
                     }
                 });
                 executorService.submit(new Runnable() {
+                    @Override
                     public void run() {
                         try {
                             Thread.sleep(200);
@@ -95,18 +98,21 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testStream() throws Exception {
-        try (AsyncHttpClient ahc = asyncHttpClient()) {
+        AsyncHttpClient ahc = asyncHttpClient();
+        try {
             final AtomicBoolean err = new AtomicBoolean(false);
-            final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
+            final LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<String>();
             final AtomicBoolean status = new AtomicBoolean(false);
             final AtomicInteger headers = new AtomicInteger(0);
             final CountDownLatch latch = new CountDownLatch(1);
             ahc.executeRequest(ahc.prepareGet(getTargetUrl()).build(), new AsyncHandler<Object>() {
+                @Override
                 public void onThrowable(Throwable t) {
                     fail("Got throwable.", t);
                     err.set(true);
                 }
 
+                @Override
                 public State onBodyPartReceived(HttpResponseBodyPart e) throws Exception {
                     if (e.length() != 0) {
                         String s = new String(e.getBodyPartBytes());
@@ -116,11 +122,13 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onStatusReceived(HttpResponseStatus e) throws Exception {
                     status.set(true);
                     return State.CONTINUE;
                 }
 
+                @Override
                 public State onHeadersReceived(HttpResponseHeaders e) throws Exception {
                     if (headers.incrementAndGet() == 2) {
                         throw new Exception("Analyze this.");
@@ -128,6 +136,7 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
                     return State.CONTINUE;
                 }
 
+                @Override
                 public Object onCompleted() throws Exception {
                     latch.countDown();
                     return null;
@@ -140,6 +149,8 @@ public class AsyncStreamLifecycleTest extends AbstractBasicTest {
             assertTrue(queue.contains("part2"));
             assertTrue(status.get());
             assertEquals(headers.get(), 1);
+        } finally {
+            ahc.close();
         }
     }
 }

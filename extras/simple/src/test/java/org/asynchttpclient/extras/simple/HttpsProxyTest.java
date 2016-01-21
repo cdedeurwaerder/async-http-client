@@ -21,10 +21,12 @@ public class HttpsProxyTest extends AbstractBasicTest {
 
     private Server server2;
 
+    @Override
     public AbstractHandler configureHandler() throws Exception {
         return new ConnectHandler();
     }
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
@@ -41,6 +43,7 @@ public class HttpsProxyTest extends AbstractBasicTest {
         logger.info("Local HTTP server started successfully");
     }
 
+    @Override
     @AfterClass(alwaysRun = true)
     public void tearDownGlobal() throws Exception {
         server.stop();
@@ -50,17 +53,20 @@ public class HttpsProxyTest extends AbstractBasicTest {
     @Test(groups = "online")
     public void testSimpleAHCConfigProxy() throws IOException, InterruptedException, ExecutionException, TimeoutException {
 
-        try (SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()//
+        SimpleAsyncHttpClient client = new SimpleAsyncHttpClient.Builder()//
                 .setProxyHost("localhost")//
                 .setProxyPort(port1)//
                 .setFollowRedirect(true)//
                 .setUrl(getTargetUrl2())//
                 .setAcceptAnyCertificate(true)//
                 .setHeader("Content-Type", "text/html")//
-                .build()) {
+                .build();
+        
+        try {
             Response r = client.get().get();
-
             assertEquals(r.getStatusCode(), 200);
+        } finally {
+            client.close();
         }
     }
 }

@@ -44,6 +44,7 @@ import org.testng.annotations.Test;
 //FIXME there's no retry actually
 public class RetryNonBlockingIssue extends AbstractBasicTest {
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
@@ -57,6 +58,7 @@ public class RetryNonBlockingIssue extends AbstractBasicTest {
         server.start();
     }
 
+    @Override
     protected String getTargetUrl() {
         return String.format("http://localhost:%d/", port1);
     }
@@ -86,8 +88,9 @@ public class RetryNonBlockingIssue extends AbstractBasicTest {
                 .setRequestTimeout(30000)//
                 .build();
 
-        try (AsyncHttpClient client = asyncHttpClient(config)) {
-            List<ListenableFuture<Response>> res = new ArrayList<>();
+        AsyncHttpClient client = asyncHttpClient(config);
+        try {
+            List<ListenableFuture<Response>> res = new ArrayList<ListenableFuture<Response>>();
             for (int i = 0; i < 32; i++) {
                 res.add(testMethodRequest(client, 3, "servlet", UUID.randomUUID().toString()));
             }
@@ -104,6 +107,8 @@ public class RetryNonBlockingIssue extends AbstractBasicTest {
             }
             System.out.println(b.toString());
             System.out.flush();
+        } finally {
+            client.close();
         }
     }
 
@@ -117,8 +122,9 @@ public class RetryNonBlockingIssue extends AbstractBasicTest {
                 .setRequestTimeout(30000)//
                 .build();
 
-        try (AsyncHttpClient client = asyncHttpClient(config)) {
-            List<ListenableFuture<Response>> res = new ArrayList<>();
+        AsyncHttpClient client = asyncHttpClient(config);
+        try {
+            List<ListenableFuture<Response>> res = new ArrayList<ListenableFuture<Response>>();
             for (int i = 0; i < 32; i++) {
                 res.add(testMethodRequest(client, 3, "servlet", UUID.randomUUID().toString()));
             }
@@ -135,13 +141,15 @@ public class RetryNonBlockingIssue extends AbstractBasicTest {
             }
             System.out.println(b.toString());
             System.out.flush();
+        } finally {
+            client.close();
         }
     }
 
     @SuppressWarnings("serial")
     public class MockExceptionServlet extends HttpServlet {
 
-        private Map<String, Integer> requests = new ConcurrentHashMap<>();
+        private Map<String, Integer> requests = new ConcurrentHashMap<String, Integer>();
 
         private synchronized int increment(String id) {
             int val = 0;
@@ -157,6 +165,7 @@ public class RetryNonBlockingIssue extends AbstractBasicTest {
             return val;
         }
 
+        @Override
         public void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
             String maxRequests = req.getParameter("maxRequests");
             int max = 0;

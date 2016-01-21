@@ -36,6 +36,7 @@ import org.testng.annotations.Test;
 public class ParamEncodingTest extends AbstractBasicTest {
 
     private class ParamEncoding extends AbstractHandler {
+        @Override
         public void handle(String s, Request r, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if ("POST".equalsIgnoreCase(request.getMethod())) {
                 String p = request.getParameter("test");
@@ -57,12 +58,15 @@ public class ParamEncodingTest extends AbstractBasicTest {
     public void testParameters() throws IOException, ExecutionException, TimeoutException, InterruptedException {
 
         String value = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKQLMNOPQRSTUVWXYZ1234567809`~!@#$%^&*()_+-=,.<>/?;:'\"[]{}\\| ";
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.preparePost("http://localhost:" + port1).addFormParam("test", value).execute();
             Response resp = f.get(10, TimeUnit.SECONDS);
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
             assertEquals(resp.getHeader("X-Param"), value.trim());
+        } finally {
+            client.close();
         }
     }
 

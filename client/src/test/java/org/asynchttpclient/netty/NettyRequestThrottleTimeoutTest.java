@@ -48,12 +48,14 @@ public class NettyRequestThrottleTimeoutTest extends AbstractBasicTest {
     }
 
     private class SlowHandler extends AbstractHandler {
+        @Override
         public void handle(String target, Request baseRequest, HttpServletRequest request, final HttpServletResponse response)
                 throws IOException, ServletException {
             response.setStatus(HttpServletResponse.SC_OK);
             final Continuation continuation = ContinuationSupport.getContinuation(request);
             continuation.suspend();
             new Thread(new Runnable() {
+                @Override
                 public void run() {
                     try {
                         Thread.sleep(SLEEPTIME_MS);
@@ -76,14 +78,15 @@ public class NettyRequestThrottleTimeoutTest extends AbstractBasicTest {
         final Semaphore requestThrottle = new Semaphore(1);
 
         int samples = 10;
-
-        try (AsyncHttpClient client = asyncHttpClient(config().setMaxConnections(1))) {
+        final AsyncHttpClient client = asyncHttpClient(config().setMaxConnections(1));
+        try {
             final CountDownLatch latch = new CountDownLatch(samples);
             final List<Exception> tooManyConnections = Collections.synchronizedList(new ArrayList<Exception>(2));
 
             for (int i = 0; i < samples; i++) {
                 new Thread(new Runnable() {
 
+                    @Override
                     public void run() {
                         try {
                             requestThrottle.acquire();
@@ -132,6 +135,8 @@ public class NettyRequestThrottleTimeoutTest extends AbstractBasicTest {
                 logger.error("Exception while calling execute", e);
 
             assertTrue(tooManyConnections.isEmpty(), "Should not have any connection errors where too many connections have been attempted");
+        } finally {
+            client.close();
         }
     }
 }

@@ -113,24 +113,25 @@ public class MultipartUploadTest extends AbstractBasicTest {
             fail("unable to find " + testResource3);
         }
 
-        List<File> testFiles = new ArrayList<>();
+        List<File> testFiles = new ArrayList<File>();
         testFiles.add(testResource1File);
         testFiles.add(testResource2File);
         testFiles.add(testResource3File);
 
-        List<String> expected = new ArrayList<>();
+        List<String> expected = new ArrayList<String>();
         expected.add(expectedContents);
         expected.add(expectedContents2);
         expected.add(expectedContents3);
 
-        List<Boolean> gzipped = new ArrayList<>();
+        List<Boolean> gzipped = new ArrayList<Boolean>();
         gzipped.add(false);
         gzipped.add(true);
         gzipped.add(false);
 
         boolean tmpFileCreated = false;
         File tmpFile = File.createTempFile("textbytearray", ".txt");
-        try (FileOutputStream os = new FileOutputStream(tmpFile)) {
+        FileOutputStream os = new FileOutputStream(tmpFile);
+        try {
             IOUtils.write(expectedContents.getBytes(UTF_8), os);
             tmpFileCreated = true;
 
@@ -144,13 +145,16 @@ public class MultipartUploadTest extends AbstractBasicTest {
         } catch (IOException e1) {
             // TODO Auto-generated catch block
             e1.printStackTrace();
+        } finally {
+            os.close();
         }
 
         if (!tmpFileCreated) {
             fail("Unable to test ByteArrayMultiPart, as unable to write to filesystem the tmp test content");
         }
 
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true));
+        try {
 
             RequestBuilder builder = post("http://localhost" + ":" + port1 + "/upload/bob");
             builder.addBodyPart(new FilePart("file1", testResource1File, "text/plain", UTF_8));
@@ -175,6 +179,7 @@ public class MultipartUploadTest extends AbstractBasicTest {
             e.printStackTrace();
             fail("Download Exception");
         } finally {
+            c.close();
             FileUtils.deleteQuietly(tmpFile);
         }
     }
@@ -215,7 +220,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] sourceBytes = null;
-                try (FileInputStream instream = new FileInputStream(sourceFile)) {
+                FileInputStream instream = new FileInputStream(sourceFile);
+                try {
                     byte[] buf = new byte[8092];
                     int len = 0;
                     while ((len = instream.read(buf)) > 0) {
@@ -227,6 +233,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                     logger.debug("================");
                     System.out.flush();
                     sourceBytes = baos.toByteArray();
+                } finally {
+                    instream.close();
                 }
 
                 tmp = new File(responseFiles[i].trim());
@@ -237,7 +245,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                 assertTrue(tmp.exists());
 
                 byte[] bytes;
-                try (FileInputStream instream = new FileInputStream(tmp)) {
+                instream = new FileInputStream(tmp);
+                try {
                     ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
                     byte[] buf = new byte[8092];
                     int len = 0;
@@ -246,6 +255,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                     }
                     bytes = baos2.toByteArray();
                     assertEquals(bytes, sourceBytes);
+                } finally {
+                    instream.close();
                 }
 
 
@@ -253,7 +264,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                     String helloString = new String(bytes);
                     assertEquals(helloString, expectedContents.get(i));
                 } else {
-                    try (FileInputStream instream = new FileInputStream(tmp)) {
+                    instream = new FileInputStream(tmp);
+                    try {
                         ByteArrayOutputStream baos3 = new ByteArrayOutputStream();
                         GZIPInputStream deflater = new GZIPInputStream(instream);
                         try {
@@ -269,6 +281,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                         String helloString = new String(baos3.toByteArray());
     
                         assertEquals(expectedContents.get(i), helloString);
+                    } finally {
+                        instream.close();
                     }
                 }
             } catch (Exception e) {
@@ -330,7 +344,7 @@ public class MultipartUploadTest extends AbstractBasicTest {
             // Check that we have a file upload request
             boolean isMultipart = ServletFileUpload.isMultipartContent(request);
             if (isMultipart) {
-                List<String> files = new ArrayList<>();
+                List<String> files = new ArrayList<String>();
                 ServletFileUpload upload = new ServletFileUpload();
                 // Parse the request
                 FileItemIterator iter = null;
@@ -339,7 +353,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                     while (iter.hasNext()) {
                         FileItemStream item = iter.next();
                         String name = item.getFieldName();
-                        try (InputStream stream = item.openStream()) {
+                        InputStream stream = item.openStream();
+                        try {
 
                             if (item.isFormField()) {
                                 LOGGER.debug("Form field " + name + " with value " + Streams.asString(stream) + " detected.");
@@ -349,7 +364,8 @@ public class MultipartUploadTest extends AbstractBasicTest {
                                 // Process the input stream
                                 File tmpFile = File.createTempFile(UUID.randomUUID().toString() + "_MockUploadServlet", ".tmp");
                                 tmpFile.deleteOnExit();
-                                try (OutputStream os = new FileOutputStream(tmpFile)) {
+                                OutputStream os = new FileOutputStream(tmpFile);
+                                try {
                                     byte[] buffer = new byte[4096];
                                     int bytesRead;
                                     while ((bytesRead = stream.read(buffer)) != -1) {
@@ -357,26 +373,36 @@ public class MultipartUploadTest extends AbstractBasicTest {
                                     }
                                     incrementFilesProcessed();
                                     files.add(tmpFile.getAbsolutePath());
+                                } finally {
+                                    os.close();
                                 }
                             }
+                        } finally {
+                            stream.close();
                         }
                     }
                 } catch (FileUploadException e) {
 
                 }
-                try (Writer w = response.getWriter()) {
+                Writer w = response.getWriter();
+                try {
                     w.write(Integer.toString(getFilesProcessed()));
                     resetFilesProcessed();
                     resetStringsProcessed();
                     w.write("||");
                     w.write(files.toString());
+                } finally {
+                    w.close();
                 }
             } else {
-                try (Writer w = response.getWriter()) {
+                Writer w = response.getWriter();
+                try {
                     w.write(Integer.toString(getFilesProcessed()));
                     resetFilesProcessed();
                     resetStringsProcessed();
                     w.write("||");
+                } finally {
+                    w.close();
                 }
             }
         }

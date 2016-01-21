@@ -34,28 +34,36 @@ import org.testng.annotations.Test;
 
 public class NonAsciiContentLengthTest extends AbstractBasicTest {
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
         server = newJettyHttpServer(port1);
         server.setHandler(new AbstractHandler() {
 
+            @Override
             public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
                 int MAX_BODY_SIZE = 1024; // Can only handle bodies of up to 1024 bytes.
                 byte[] b = new byte[MAX_BODY_SIZE];
                 int offset = 0;
                 int numBytesRead;
-                try (ServletInputStream is = request.getInputStream()) {
+                ServletInputStream is = request.getInputStream();
+                try {
                     while ((numBytesRead = is.read(b, offset, MAX_BODY_SIZE - offset)) != -1) {
                         offset += numBytesRead;
                     }
+                } finally {
+                    is.close();
                 }
                 assertEquals(request.getContentLength(), offset);
                 response.setStatus(200);
                 response.setCharacterEncoding(request.getCharacterEncoding());
                 response.setContentLength(request.getContentLength());
-                try (ServletOutputStream os = response.getOutputStream()) {
+                ServletOutputStream os = response.getOutputStream();
+                try {
                     os.write(b, 0, offset);
+                } finally {
+                    os.close();
                 }
             }
         });
@@ -69,12 +77,15 @@ public class NonAsciiContentLengthTest extends AbstractBasicTest {
     }
 
     protected void execute(String body) throws IOException, InterruptedException, ExecutionException {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             BoundRequestBuilder r = client.preparePost(getTargetUrl()).setBody(body).setCharset(UTF_8);
             Future<Response> f = r.execute();
             Response resp = f.get();
             assertEquals(resp.getStatusCode(), 200);
             assertEquals(body, resp.getResponseBody(UTF_8));
+        } finally {
+            client.close();
         }
     }
 }

@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import org.asynchttpclient.AsyncHttpClientConfig;
 import org.asynchttpclient.channel.ChannelPool;
@@ -45,8 +46,8 @@ public final class DefaultChannelPool implements ChannelPool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultChannelPool.class);
 
-    private final ConcurrentHashMap<Object, ConcurrentLinkedQueue<IdleChannel>> partitions = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, ChannelCreation> channelId2Creation = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Object, ConcurrentLinkedQueue<IdleChannel>> partitions = new ConcurrentHashMap<Object, ConcurrentLinkedQueue<IdleChannel>>();
+    private final ConcurrentHashMap<Integer, ChannelCreation> channelId2Creation = new ConcurrentHashMap<Integer, ChannelCreation>();
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final Timer nettyTimer;
     private final int maxConnectionTtl;
@@ -141,7 +142,7 @@ public final class DefaultChannelPool implements ChannelPool {
                 if (isTtlExpired(idleChannel.channel, now) || isIdleTimeoutExpired(idleChannel, now) || isRemotelyClosed(idleChannel.channel)) {
                     LOGGER.debug("Adding Candidate expired Channel {}", idleChannel.channel);
                     if (idleTimeoutChannels == null)
-                        idleTimeoutChannels = new ArrayList<>();
+                        idleTimeoutChannels = new ArrayList<IdleChannel>();
                     idleTimeoutChannels.add(idleChannel);
                 }
             }
@@ -177,7 +178,7 @@ public final class DefaultChannelPool implements ChannelPool {
                 } else if (closedChannels == null) {
                     // first non closeable to be skipped, copy all
                     // previously skipped closeable channels
-                    closedChannels = new ArrayList<>(candidates.size());
+                    closedChannels = new ArrayList<IdleChannel>(candidates.size());
                     for (int j = 0; j < i; j++)
                         closedChannels.add(candidates.get(j));
                 }
@@ -186,6 +187,7 @@ public final class DefaultChannelPool implements ChannelPool {
             return closedChannels != null ? closedChannels : candidates;
         }
 
+        @Override
         public void run(Timeout timeout) throws Exception {
 
             if (isClosed.get())
@@ -234,6 +236,7 @@ public final class DefaultChannelPool implements ChannelPool {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean offer(Channel channel, Object partitionKey) {
         if (isClosed.get())
             return false;
@@ -254,7 +257,13 @@ public final class DefaultChannelPool implements ChannelPool {
     private boolean offer0(Channel channel, Object partitionKey, long now) {
         ConcurrentLinkedQueue<IdleChannel> partition = partitions.get(partitionKey);
         if (partition == null) {
-            partition = partitions.computeIfAbsent(partitionKey, pk -> new ConcurrentLinkedQueue<>());
+            partition = partitions.computeIfAbsent(partitionKey, new Function<Object, ConcurrentLinkedQueue<IdleChannel>>() {
+
+                @Override
+                public ConcurrentLinkedQueue<IdleChannel> apply(Object t) {
+                    return new ConcurrentLinkedQueue<IdleChannel>();
+                }
+            });
         }
         return partition.add(new IdleChannel(channel, now));
     }
@@ -268,6 +277,7 @@ public final class DefaultChannelPool implements ChannelPool {
     /**
      * {@inheritDoc}
      */
+    @Override
     public Channel poll(Object partitionKey) {
 
         IdleChannel idleChannel = null;
@@ -291,6 +301,7 @@ public final class DefaultChannelPool implements ChannelPool {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean removeAll(Channel channel) {
         ChannelCreation creation = channelId2Creation.remove(channelId(channel));
         return !isClosed.get() && creation != null && partitions.get(creation.partitionKey).remove(channel);
@@ -299,6 +310,7 @@ public final class DefaultChannelPool implements ChannelPool {
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isOpen() {
         return !isClosed.get();
     }
@@ -306,6 +318,7 @@ public final class DefaultChannelPool implements ChannelPool {
     /**
      * {@inheritDoc}
      */
+    @Override
     public void destroy() {
         if (isClosed.getAndSet(true))
             return;

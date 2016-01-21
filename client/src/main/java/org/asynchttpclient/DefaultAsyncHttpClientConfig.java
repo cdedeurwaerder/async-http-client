@@ -52,12 +52,19 @@ public class DefaultAsyncHttpClientConfig implements AsyncHttpClientConfig {
     private static final String AHC_VERSION;
 
     static {
-        try (InputStream is = DefaultAsyncHttpClientConfig.class.getResourceAsStream("/ahc-version.properties")) {
+        InputStream is = DefaultAsyncHttpClientConfig.class.getResourceAsStream("/ahc-version.properties");
+        try {
             Properties prop = new Properties();
             prop.load(is);
             AHC_VERSION = prop.getProperty("ahc.version", "UNKNOWN");
         } catch (IOException e) {
             throw new ExceptionInInitializerError(e);
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                //
+            }
         }
     }
 
@@ -576,9 +583,9 @@ public class DefaultAsyncHttpClientConfig implements AsyncHttpClientConfig {
         private SslEngineFactory sslEngineFactory;
 
         // filters
-        private final List<RequestFilter> requestFilters = new LinkedList<>();
-        private final List<ResponseFilter> responseFilters = new LinkedList<>();
-        private final List<IOExceptionFilter> ioExceptionFilters = new LinkedList<>();
+        private final List<RequestFilter> requestFilters = new LinkedList<RequestFilter>();
+        private final List<ResponseFilter> responseFilters = new LinkedList<ResponseFilter>();
+        private final List<IOExceptionFilter> ioExceptionFilters = new LinkedList<IOExceptionFilter>();
 
         // internals
         private String threadPoolName = defaultThreadPoolName();
@@ -590,7 +597,7 @@ public class DefaultAsyncHttpClientConfig implements AsyncHttpClientConfig {
         private int webSocketMaxFrameSize = defaultWebSocketMaxFrameSize();
         private boolean useNativeTransport = defaultUseNativeTransport();
         private boolean usePooledMemory = defaultUsePooledMemory();
-        private Map<ChannelOption<Object>, Object> channelOptions = new HashMap<>();
+        private Map<ChannelOption<Object>, Object> channelOptions = new HashMap<ChannelOption<Object>, Object>();
         private EventLoopGroup eventLoopGroup;
         private Timer nettyTimer;
         private ThreadFactory threadFactory;
@@ -985,6 +992,7 @@ public class DefaultAsyncHttpClientConfig implements AsyncHttpClientConfig {
             return ProxyServerSelector.NO_PROXY_SELECTOR;
         }
 
+        @SuppressWarnings("unchecked")
         public DefaultAsyncHttpClientConfig build() {
 
             return new DefaultAsyncHttpClientConfig(//
@@ -1021,9 +1029,9 @@ public class DefaultAsyncHttpClientConfig implements AsyncHttpClientConfig {
                     sslSessionTimeout, //
                     sslContext, //
                     sslEngineFactory, //
-                    requestFilters.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(requestFilters), //
-                    responseFilters.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(responseFilters),//
-                    ioExceptionFilters.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(ioExceptionFilters),//
+                    (List<RequestFilter>)(requestFilters.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(requestFilters)), //
+                    (List<ResponseFilter>)(responseFilters.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(responseFilters)),//
+                    (List<IOExceptionFilter>)(ioExceptionFilters.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(ioExceptionFilters)),//
                     threadPoolName, //
                     httpClientCodecMaxInitialLineLength, //
                     httpClientCodecMaxHeaderSize, //
@@ -1031,7 +1039,7 @@ public class DefaultAsyncHttpClientConfig implements AsyncHttpClientConfig {
                     chunkedFileChunkSize, //
                     webSocketMaxBufferSize, //
                     webSocketMaxFrameSize, //
-                    channelOptions.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(channelOptions),//
+                    (Map<ChannelOption<Object>, Object>)(channelOptions.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(channelOptions)),//
                     eventLoopGroup, //
                     useNativeTransport, //
                     usePooledMemory, //

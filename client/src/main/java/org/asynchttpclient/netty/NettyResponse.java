@@ -63,7 +63,7 @@ public class NettyResponse implements Response {
         }
 
         if (isNonEmpty(setCookieHeaders)) {
-            List<Cookie> cookies = new ArrayList<>();
+            List<Cookie> cookies = new ArrayList<Cookie>();
             for (String value : setCookieHeaders) {
                 Cookie c = CookieDecoder.decode(value);
                 if (c != null)

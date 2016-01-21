@@ -33,7 +33,7 @@ public class MultipartBodyTest {
 
     @Test(groups = "standalone")
     public void testBasics() throws Exception {
-        final List<Part> parts = new ArrayList<>();
+        final List<Part> parts = new ArrayList<Part>();
 
         // add a file
         final File testFile = getTestfile();

@@ -45,6 +45,7 @@ public class DigestAuthTest extends AbstractBasicTest {
     }
 
     private static class SimpleHandler extends AbstractHandler {
+        @Override
         public void handle(String s, Request r, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 
             response.addHeader("X-Auth", request.getHeader("Authorization"));
@@ -61,7 +62,8 @@ public class DigestAuthTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void digestAuthTest() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.prepareGet("http://localhost:" + port1 + "/")//
                     .setRealm(digestAuthRealm(USER, ADMIN).setRealmName("MyRealm").build())//
                     .execute();
@@ -69,12 +71,15 @@ public class DigestAuthTest extends AbstractBasicTest {
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
             assertNotNull(resp.getHeader("X-Auth"));
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void digestAuthTestWithoutScheme() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.prepareGet("http://localhost:" + port1 + "/")//
                     .setRealm(digestAuthRealm(USER, ADMIN).setRealmName("MyRealm").build())//
                     .execute();
@@ -82,18 +87,23 @@ public class DigestAuthTest extends AbstractBasicTest {
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
             assertNotNull(resp.getHeader("X-Auth"));
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void digestAuthNegativeTest() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.prepareGet("http://localhost:" + port1 + "/")//
                     .setRealm(digestAuthRealm("fake", ADMIN).build())//
                     .execute();
             Response resp = f.get(20, TimeUnit.SECONDS);
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), 401);
+        } finally {
+            client.close();
         }
     }
 }

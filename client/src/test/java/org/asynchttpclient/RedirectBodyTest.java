@@ -68,49 +68,61 @@ public class RedirectBodyTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void regular301LosesBody() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).addResponseFilter(redirectOnce))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).addResponseFilter(redirectOnce));
+        try {
             String body = "hello there";
             String contentType = "text/plain";
 
             Response response = c.preparePost(getTargetUrl()).setHeader("Content-Type", contentType).setBody(body).setHeader("X-REDIRECT", "301").execute().get(TIMEOUT, TimeUnit.SECONDS);
             assertEquals(response.getResponseBody(), "");
             assertNull(receivedContentType);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void regular302LosesBody() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).addResponseFilter(redirectOnce))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).addResponseFilter(redirectOnce));
+        try {
             String body = "hello there";
             String contentType = "text/plain";
 
             Response response = c.preparePost(getTargetUrl()).setHeader("Content-Type", contentType).setBody(body).setHeader("X-REDIRECT", "302").execute().get(TIMEOUT, TimeUnit.SECONDS);
             assertEquals(response.getResponseBody(), "");
             assertNull(receivedContentType);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void regular302StrictKeepsBody() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).setStrict302Handling(true).addResponseFilter(redirectOnce))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).setStrict302Handling(true).addResponseFilter(redirectOnce));
+        try {
             String body = "hello there";
             String contentType = "text/plain";
 
             Response response = c.preparePost(getTargetUrl()).setHeader("Content-Type", contentType).setBody(body).setHeader("X-REDIRECT", "302").execute().get(TIMEOUT, TimeUnit.SECONDS);
             assertEquals(response.getResponseBody(), body);
             assertEquals(receivedContentType, contentType);
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void regular307KeepsBody() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).addResponseFilter(redirectOnce))) {
+        AsyncHttpClient c = asyncHttpClient(config().setFollowRedirect(true).addResponseFilter(redirectOnce));
+        try {
             String body = "hello there";
             String contentType = "text/plain";
 
             Response response = c.preparePost(getTargetUrl()).setHeader("Content-Type", contentType).setBody(body).setHeader("X-REDIRECT", "307").execute().get(TIMEOUT, TimeUnit.SECONDS);
             assertEquals(response.getResponseBody(), body);
             assertEquals(receivedContentType, contentType);
+        } finally {
+            c.close();
         }
     }
 }

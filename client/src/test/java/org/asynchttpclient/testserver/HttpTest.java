@@ -60,8 +60,11 @@ public abstract class HttpTest {
         }
 
         public void run(ClientFunction f) throws Throwable {
-            try (AsyncHttpClient client = asyncHttpClient(config)) {
+            AsyncHttpClient client = asyncHttpClient(config);
+            try {
                 f.apply(client);
+            } finally {
+                client.close();
             }
         }
     }

@@ -232,10 +232,10 @@ public final class NettyRequestSender {
     }
 
     private <T> ListenableFuture<T> sendRequestWithNewChannel(//
-            Request request,//
-            ProxyServer proxy,//
+            final Request request,//
+            ProxyServer proxy,final //
             NettyResponseFuture<T> future,//
-            AsyncHandler<T> asyncHandler,//
+            final AsyncHandler<T> asyncHandler,//
             boolean reclaimCache) {
 
         // some headers are only set when performing the first request
@@ -250,9 +250,9 @@ public final class NettyRequestSender {
 
         // Do not throw an exception when we need an extra connection for a redirect
         // FIXME why? This violate the max connection per host handling, right?
-        Bootstrap bootstrap = channelManager.getBootstrap(request.getUri(), proxy);
+        final Bootstrap bootstrap = channelManager.getBootstrap(request.getUri(), proxy);
 
-        Object partitionKey = future.getPartitionKey();
+        final Object partitionKey = future.getPartitionKey();
 
         final boolean channelPreempted = !reclaimCache;
 
@@ -276,7 +276,7 @@ public final class NettyRequestSender {
 
                     @Override
                     protected void onSuccess(List<InetSocketAddress> addresses) {
-                        NettyConnectListener<T> connectListener = new NettyConnectListener<>(future, NettyRequestSender.this, channelManager, channelPreempted, partitionKey);
+                        NettyConnectListener<T> connectListener = new NettyConnectListener<T>(future, NettyRequestSender.this, channelManager, channelPreempted, partitionKey);
                         new NettyChannelConnector(request.getLocalAddress(), addresses, asyncHandler, future.getTimeoutsHolder(), closed).connect(bootstrap, connectListener);
                     }
 
@@ -294,7 +294,7 @@ public final class NettyRequestSender {
 
     private <T> NettyResponseFuture<T> newNettyResponseFuture(Request request, AsyncHandler<T> asyncHandler, NettyRequest nettyRequest, ProxyServer proxyServer) {
 
-        NettyResponseFuture<T> future = new NettyResponseFuture<>(//
+        NettyResponseFuture<T> future = new NettyResponseFuture<T>(//
                 request,//
                 asyncHandler,//
                 nettyRequest,//

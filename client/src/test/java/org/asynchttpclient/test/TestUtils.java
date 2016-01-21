@@ -99,8 +99,11 @@ public class TestUtils {
     }
 
     public static synchronized int findFreePort() throws IOException {
-        try (ServerSocket socket = new ServerSocket(0)) {
+        ServerSocket socket = new ServerSocket(0);
+        try {
             return socket.getLocalPort();
+        } finally {
+            socket.close();
         }
     }
 
@@ -112,9 +115,12 @@ public class TestUtils {
         } else {
             File tmpFile = File.createTempFile("tmpfile-", ".data", TMP_DIR);
             tmpFile.deleteOnExit();
-            try (InputStream is = cl.getResourceAsStream(path)) {
+            InputStream is = cl.getResourceAsStream(path);
+            try {
                 FileUtils.copyInputStreamToFile(is, tmpFile);
                 return tmpFile;
+            } finally {
+                is.close();
             }
         }
     }
@@ -123,7 +129,8 @@ public class TestUtils {
         long repeats = approxSize / TestUtils.PATTERN_BYTES.length + 1;
         File tmpFile = File.createTempFile("tmpfile-", ".data", TMP_DIR);
         tmpFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tmpFile)) {
+        FileOutputStream out = new FileOutputStream(tmpFile);
+        try {
             for (int i = 0; i < repeats; i++) {
                 out.write(PATTERN_BYTES);
             }
@@ -132,6 +139,8 @@ public class TestUtils {
             assertEquals(tmpFile.length(), expectedFileSize, "Invalid file length");
 
             return tmpFile;
+        } finally {
+            out.close();
         }
     }
 
@@ -235,11 +244,11 @@ public class TestUtils {
         mapping.setConstraint(constraint);
         mapping.setPathSpec("/*");
 
-        Set<String> knownRoles = new HashSet<>();
+        Set<String> knownRoles = new HashSet<String>();
         knownRoles.add(USER);
         knownRoles.add(ADMIN);
 
-        List<ConstraintMapping> cm = new ArrayList<>();
+        List<ConstraintMapping> cm = new ArrayList<ConstraintMapping>();
         cm.add(mapping);
 
         ConstraintSecurityHandler security = new ConstraintSecurityHandler();
@@ -252,9 +261,12 @@ public class TestUtils {
 
     private static KeyManager[] createKeyManagers() throws GeneralSecurityException, IOException {
         KeyStore ks = KeyStore.getInstance("JKS");
-        try (InputStream keyStoreStream = TestUtils.class.getClassLoader().getResourceAsStream("ssltest-cacerts.jks")) {
+        InputStream keyStoreStream = TestUtils.class.getClassLoader().getResourceAsStream("ssltest-cacerts.jks");
+        try {
             char[] keyStorePassword = "changeit".toCharArray();
             ks.load(keyStoreStream, keyStorePassword);
+        } finally {
+            keyStoreStream.close();
         }
         assert (ks.size() > 0);
 
@@ -269,9 +281,12 @@ public class TestUtils {
 
     private static TrustManager[] createTrustManagers() throws GeneralSecurityException, IOException {
         KeyStore ks = KeyStore.getInstance("JKS");
-        try (InputStream keyStoreStream = TestUtils.class.getClassLoader().getResourceAsStream("ssltest-keystore.jks")) {
+        InputStream keyStoreStream = TestUtils.class.getClassLoader().getResourceAsStream("ssltest-keystore.jks");
+        try {
             char[] keyStorePassword = "changeit".toCharArray();
             ks.load(keyStoreStream, keyStorePassword);
+        } finally {
+            keyStoreStream.close();
         }
         assert (ks.size() > 0);
 

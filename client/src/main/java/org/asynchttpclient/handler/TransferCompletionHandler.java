@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TransferCompletionHandler extends AsyncCompletionHandlerBase {
     private final static Logger logger = LoggerFactory.getLogger(TransferCompletionHandler.class);
-    private final ConcurrentLinkedQueue<TransferListener> listeners = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<TransferListener> listeners = new ConcurrentLinkedQueue<TransferListener>();
     private final boolean accumulateResponseBytes;
     private HttpHeaders headers;
 

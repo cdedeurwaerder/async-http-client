@@ -38,6 +38,7 @@ public class FastUnauthorizedUploadTest extends AbstractBasicTest {
     public AbstractHandler configureHandler() throws Exception {
         return new AbstractHandler() {
 
+            @Override
             public void handle(String target, Request baseRequest, HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
 
                 resp.setStatus(401);
@@ -53,10 +54,13 @@ public class FastUnauthorizedUploadTest extends AbstractBasicTest {
     public void testUnauthorizedWhileUploading() throws Exception {
         File file = createTempFile(1024 * 1024);
 
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Response response = client.preparePut(getTargetUrl()).addBodyPart(new FilePart("test", file, "application/octet-stream", UTF_8)).execute()
                     .get();
             assertEquals(response.getStatusCode(), 401);
+        } finally {
+            client.close();
         }
     }
 }

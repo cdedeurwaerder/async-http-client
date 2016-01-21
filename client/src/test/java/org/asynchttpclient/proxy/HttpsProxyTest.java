@@ -36,10 +36,12 @@ public class HttpsProxyTest extends AbstractBasicTest {
 
     private Server server2;
 
+    @Override
     public AbstractHandler configureHandler() throws Exception {
         return new ConnectHandler();
     }
 
+    @Override
     @BeforeClass(alwaysRun = true)
     public void setUpGlobal() throws Exception {
         port1 = findFreePort();
@@ -56,6 +58,7 @@ public class HttpsProxyTest extends AbstractBasicTest {
         logger.info("Local HTTP server started successfully");
     }
 
+    @Override
     @AfterClass(alwaysRun = true)
     public void tearDownGlobal() throws Exception {
         server.stop();
@@ -65,10 +68,13 @@ public class HttpsProxyTest extends AbstractBasicTest {
     @Test(groups = "standalone")
     public void testRequestProxy() throws Exception {
 
-        try (AsyncHttpClient asyncHttpClient = asyncHttpClient(config().setFollowRedirect(true).setAcceptAnyCertificate(true))) {
+        AsyncHttpClient asyncHttpClient = asyncHttpClient(config().setFollowRedirect(true).setAcceptAnyCertificate(true));
+        try {
             RequestBuilder rb = get(getTargetUrl2()).setProxyServer(proxyServer("localhost", port1));
             Response r = asyncHttpClient.executeRequest(rb.build()).get();
             assertEquals(r.getStatusCode(), 200);
+        } finally {
+            asyncHttpClient.close();
         }
     }
 
@@ -79,16 +85,19 @@ public class HttpsProxyTest extends AbstractBasicTest {
                 .setProxyServer(proxyServer("localhost", port1).build())//
                 .setAcceptAnyCertificate(true)//
                 .build();
-        try (AsyncHttpClient asyncHttpClient = asyncHttpClient(config)) {
+        AsyncHttpClient asyncHttpClient = asyncHttpClient(config);
+        try {
             Response r = asyncHttpClient.executeRequest(get(getTargetUrl2())).get();
             assertEquals(r.getStatusCode(), 200);
+        } finally {
+            asyncHttpClient.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testPooledConnectionsWithProxy() throws Exception {
-
-        try (AsyncHttpClient asyncHttpClient = asyncHttpClient(config().setFollowRedirect(true).setAcceptAnyCertificate(true).setKeepAlive(true))) {
+        AsyncHttpClient asyncHttpClient = asyncHttpClient(config().setFollowRedirect(true).setAcceptAnyCertificate(true).setKeepAlive(true));
+        try {
             RequestBuilder rb = get(getTargetUrl2()).setProxyServer(proxyServer("localhost", port1));
 
             Response r1 = asyncHttpClient.executeRequest(rb.build()).get();
@@ -96,6 +105,8 @@ public class HttpsProxyTest extends AbstractBasicTest {
 
             Response r2 = asyncHttpClient.executeRequest(rb.build()).get();
             assertEquals(r2.getStatusCode(), 200);
+        } finally {
+            asyncHttpClient.close();
         }
     }
 }

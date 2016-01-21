@@ -251,7 +251,7 @@ public class DefaultRequest implements Request {
         if (queryParams == null)
             // lazy load
             if (isNonEmpty(uri.getQuery())) {
-                queryParams = new ArrayList<>(1);
+                queryParams = new ArrayList<Param>(1);
                 for (String queryStringParam : uri.getQuery().split("&")) {
                     int pos = queryStringParam.indexOf('=');
                     if (pos <= 0)

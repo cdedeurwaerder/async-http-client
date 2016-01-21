@@ -43,6 +43,7 @@ import org.testng.annotations.Test;
  */
 public class QueryParametersTest extends AbstractBasicTest {
     private class QueryStringHandler extends AbstractHandler {
+        @Override
         public void handle(String s, Request r, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if ("GET".equalsIgnoreCase(request.getMethod())) {
                 String qs = request.getQueryString();
@@ -69,13 +70,16 @@ public class QueryParametersTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testQueryParameters() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             Future<Response> f = client.prepareGet("http://localhost:" + port1).addQueryParam("a", "1").addQueryParam("b", "2").execute();
             Response resp = f.get(3, TimeUnit.SECONDS);
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
             assertEquals(resp.getHeader("a"), "1");
             assertEquals(resp.getHeader("b"), "2");
+        } finally {
+            client.close();
         }
     }
 
@@ -83,23 +87,28 @@ public class QueryParametersTest extends AbstractBasicTest {
     public void testUrlRequestParametersEncoding() throws IOException, ExecutionException, InterruptedException {
         String URL = getTargetUrl() + "?q=";
         String REQUEST_PARAM = "github github \ngithub";
-
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        AsyncHttpClient client = asyncHttpClient();
+        try {
             String requestUrl2 = URL + URLEncoder.encode(REQUEST_PARAM, UTF_8.name());
             logger.info("Executing request [{}] ...", requestUrl2);
             Response response = client.prepareGet(requestUrl2).execute().get();
             String s = URLDecoder.decode(response.getHeader("q"), UTF_8.name());
             assertEquals(s, REQUEST_PARAM);
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void urlWithColonTest() throws Exception {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             String query = "test:colon:";
             Response response = c.prepareGet(String.format("http://localhost:%d/foo/test/colon?q=%s", port1, query)).setHeader("Content-Type", "text/html").execute().get(TIMEOUT, TimeUnit.SECONDS);
 
             assertEquals(response.getHeader("q"), query);
+        } finally {
+            c.close();
         }
     }
 }

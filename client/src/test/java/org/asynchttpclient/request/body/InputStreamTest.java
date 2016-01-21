@@ -40,6 +40,7 @@ import org.testng.annotations.Test;
 public class InputStreamTest extends AbstractBasicTest {
 
     private static class InputStreamHandler extends AbstractHandler {
+        @Override
         public void handle(String s, Request r, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
             if ("POST".equalsIgnoreCase(request.getMethod())) {
                 byte[] bytes = new byte[3];
@@ -69,8 +70,8 @@ public class InputStreamTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testInvalidInputStream() throws IOException, ExecutionException, TimeoutException, InterruptedException {
-
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
             HttpHeaders h = new DefaultHttpHeaders().add(HttpHeaders.Names.CONTENT_TYPE, HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED);
 
             InputStream is = new InputStream() {
@@ -86,11 +87,11 @@ public class InputStreamTest extends AbstractBasicTest {
                 public int read() throws IOException {
                     int fakeCount = readAllowed++;
                     if (fakeCount == 0) {
-                        return (int) 'a';
+                        return 'a';
                     } else if (fakeCount == 1) {
-                        return (int) 'b';
+                        return 'b';
                     } else if (fakeCount == 2) {
-                        return (int) 'c';
+                        return 'c';
                     } else {
                         return -1;
                     }
@@ -101,6 +102,8 @@ public class InputStreamTest extends AbstractBasicTest {
             assertNotNull(resp);
             assertEquals(resp.getStatusCode(), HttpServletResponse.SC_OK);
             assertEquals(resp.getHeader("X-Param"), "abc");
+        } finally {
+            c.close();
         }
     }
 }

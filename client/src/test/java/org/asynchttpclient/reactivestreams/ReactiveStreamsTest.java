@@ -45,17 +45,21 @@ public class ReactiveStreamsTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void testStreamingPutImage() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000))) {
+        AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000));
+        try {
             Response response = client.preparePut(getTargetUrl()).setBody(LARGE_IMAGE_PUBLISHER).execute().get();
             assertEquals(response.getStatusCode(), 200);
             assertEquals(response.getResponseBodyAsBytes(), LARGE_IMAGE_BYTES);
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
     public void testConnectionDoesNotGetClosed() throws Exception {
         // test that we can stream the same request multiple times
-        try (AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000))) {
+        AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000));
+        try {
             BoundRequestBuilder requestBuilder = client.preparePut(getTargetUrl()).setBody(LARGE_IMAGE_PUBLISHER);
             Response response = requestBuilder.execute().get();
             assertEquals(response.getStatusCode(), 200);
@@ -64,16 +68,21 @@ public class ReactiveStreamsTest extends AbstractBasicTest {
             response = requestBuilder.execute().get();
             assertEquals(response.getStatusCode(), 200);
             assertEquals(response.getResponseBodyAsBytes(), LARGE_IMAGE_BYTES);
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone", expectedExceptions = ExecutionException.class)
     public void testFailingStream() throws Exception {
-        try (AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000))) {
+        AsyncHttpClient client = asyncHttpClient(config().setRequestTimeout(100 * 6000));
+        try {
             Observable<ByteBuffer> failingObservable = Observable.error(new FailedStream());
             Publisher<ByteBuffer> failingPublisher = RxReactiveStreams.toPublisher(failingObservable);
 
             client.preparePut(getTargetUrl()).setBody(failingPublisher).execute().get();
+        } finally {
+            client.close();
         }
     }
 
@@ -83,7 +92,8 @@ public class ReactiveStreamsTest extends AbstractBasicTest {
 
     @Test(groups = "standalone")
     public void streamedResponseTest() throws Throwable {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
 
             ListenableFuture<SimpleStreamedAsyncHandler> future = c.preparePost(getTargetUrl()).setBody(LARGE_IMAGE_BYTES).execute(new SimpleStreamedAsyncHandler());
 
@@ -97,12 +107,15 @@ public class ReactiveStreamsTest extends AbstractBasicTest {
             // Make sure a regular request still works
             assertEquals(c.preparePost(getTargetUrl()).setBody("Hello").execute().get().getResponseBody(), "Hello");
 
+        } finally {
+            c.close();
         }
     }
 
     @Test(groups = "standalone")
     public void cancelStreamedResponseTest() throws Throwable {
-        try (AsyncHttpClient c = asyncHttpClient()) {
+        AsyncHttpClient c = asyncHttpClient();
+        try {
 
             // Cancel immediately
             c.preparePost(getTargetUrl()).setBody(LARGE_IMAGE_BYTES).execute(new CancellingStreamedAsyncProvider(0)).get();
@@ -115,6 +128,8 @@ public class ReactiveStreamsTest extends AbstractBasicTest {
 
             // Make sure a regular request works
             assertEquals(c.preparePost(getTargetUrl()).setBody("Hello").execute().get().getResponseBody(), "Hello");
+        } finally {
+            c.close();
         }
     }
 

@@ -78,7 +78,7 @@ public final class NettyConnectListener<T> extends SimpleChannelFutureListener {
     }
 
     @Override
-    public void onSuccess(Channel channel) {
+    public void onSuccess(final Channel channel) {
 
         Request request = future.getTargetRequest();
         Uri uri = request.getUri();

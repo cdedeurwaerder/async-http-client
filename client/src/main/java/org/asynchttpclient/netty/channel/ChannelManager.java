@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
@@ -102,8 +103,8 @@ public class ChannelManager {
     private final Semaphore freeChannels;
     private final ChannelGroup openChannels;
     private final boolean maxConnectionsPerHostEnabled;
-    private final ConcurrentHashMap<Object, Semaphore> freeChannelsPerHost = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Channel, Object> channelId2PartitionKey = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Object, Semaphore> freeChannelsPerHost = new ConcurrentHashMap<Object, Semaphore>();
+    private final ConcurrentHashMap<Channel, Object> channelId2PartitionKey = new ConcurrentHashMap<Channel, Object>();
 
     private AsyncHttpClientHandler wsHandler;
 
@@ -316,7 +317,13 @@ public class ChannelManager {
     }
 
     private Semaphore getFreeConnectionsForHost(Object partitionKey) {
-        return freeChannelsPerHost.computeIfAbsent(partitionKey, pk -> new Semaphore(config.getMaxConnectionsPerHost()));
+        return freeChannelsPerHost.computeIfAbsent(partitionKey, new Function<Object, Semaphore>() {
+
+            @Override
+            public Semaphore apply(Object t) {
+                return new Semaphore(config.getMaxConnectionsPerHost());
+            }
+        });
     }
 
     private boolean tryAcquirePerHost(Object partitionKey) {
@@ -466,6 +473,7 @@ public class ChannelManager {
     public final Callback newDrainCallback(final NettyResponseFuture<?> future, final Channel channel, final boolean keepAlive, final Object partitionKey) {
 
         return new Callback(future) {
+            @Override
             public void call() {
                 tryToOfferChannelToPool(channel, future.getAsyncHandler(), keepAlive, partitionKey);
             }

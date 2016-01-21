@@ -15,6 +15,7 @@ package org.asynchttpclient.extras.rxjava;
 import static org.asynchttpclient.Dsl.*;
 import static org.testng.Assert.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.asynchttpclient.AsyncHttpClient;
@@ -29,10 +30,10 @@ import rx.observers.TestSubscriber;
 public class AsyncHttpObservableTest {
 
     @Test(groups = "standalone")
-    public void testToObservableNoError() {
-        final TestSubscriber<Response> tester = new TestSubscriber<>();
-
-        try (AsyncHttpClient client = asyncHttpClient()) {
+    public void testToObservableNoError() throws IOException {
+        final TestSubscriber<Response> tester = new TestSubscriber<Response>();
+        final AsyncHttpClient client = asyncHttpClient();
+        try {
             Observable<Response> o1 = AsyncHttpObservable.toObservable(new Func0<BoundRequestBuilder>() {
                 @Override
                 public BoundRequestBuilder call() {
@@ -50,14 +51,17 @@ public class AsyncHttpObservableTest {
             assertEquals(responses.get(0).getStatusCode(), 200);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
-    public void testToObservableError() {
-        final TestSubscriber<Response> tester = new TestSubscriber<>();
+    public void testToObservableError() throws IOException {
+        final TestSubscriber<Response> tester = new TestSubscriber<Response>();
 
-        try (AsyncHttpClient client = asyncHttpClient()) {
+        final AsyncHttpClient client = asyncHttpClient();
+        try {
             Observable<Response> o1 = AsyncHttpObservable.toObservable(new Func0<BoundRequestBuilder>() {
                 @Override
                 public BoundRequestBuilder call() {
@@ -75,14 +79,16 @@ public class AsyncHttpObservableTest {
             assertEquals(responses.get(0).getStatusCode(), 404);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
-    public void testObserveNoError() {
-        final TestSubscriber<Response> tester = new TestSubscriber<>();
-
-        try (AsyncHttpClient client = asyncHttpClient()) {
+    public void testObserveNoError() throws IOException {
+        final TestSubscriber<Response> tester = new TestSubscriber<Response>();
+        final AsyncHttpClient client = asyncHttpClient();
+        try {
             Observable<Response> o1 = AsyncHttpObservable.observe(new Func0<BoundRequestBuilder>() {
                 @Override
                 public BoundRequestBuilder call() {
@@ -100,14 +106,16 @@ public class AsyncHttpObservableTest {
             assertEquals(responses.get(0).getStatusCode(), 200);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
-    public void testObserveError() {
-        final TestSubscriber<Response> tester = new TestSubscriber<>();
-
-        try (AsyncHttpClient client = asyncHttpClient()) {
+    public void testObserveError() throws IOException {
+        final TestSubscriber<Response> tester = new TestSubscriber<Response>();
+        final AsyncHttpClient client = asyncHttpClient();
+        try {
             Observable<Response> o1 = AsyncHttpObservable.observe(new Func0<BoundRequestBuilder>() {
                 @Override
                 public BoundRequestBuilder call() {
@@ -125,14 +133,16 @@ public class AsyncHttpObservableTest {
             assertEquals(responses.get(0).getStatusCode(), 404);
         } catch (Exception e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 
     @Test(groups = "standalone")
-    public void testObserveMultiple() {
-        final TestSubscriber<Response> tester = new TestSubscriber<>();
-
-        try (AsyncHttpClient client = asyncHttpClient()) {
+    public void testObserveMultiple() throws IOException {
+        final TestSubscriber<Response> tester = new TestSubscriber<Response>();
+        final AsyncHttpClient client = asyncHttpClient();
+        try {
             Observable<Response> o1 = AsyncHttpObservable.observe(new Func0<BoundRequestBuilder>() {
                 @Override
                 public BoundRequestBuilder call() {
@@ -165,6 +175,8 @@ public class AsyncHttpObservableTest {
             }
         } catch (Exception e) {
             Thread.currentThread().interrupt();
+        } finally {
+            client.close();
         }
     }
 }

@@ -69,7 +69,7 @@ public class NettyChannelConnector {
         }
     }
 
-    private void connect0(Bootstrap bootstrap, final NettyConnectListener<?> connectListener, InetSocketAddress remoteAddress) {
+    private void connect0(final Bootstrap bootstrap, final NettyConnectListener<?> connectListener, final InetSocketAddress remoteAddress) {
         final ChannelFuture future = bootstrap.connect(remoteAddress, localAddress);
 
         future.addListener(new SimpleChannelFutureListener() {
